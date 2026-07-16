@@ -45,8 +45,8 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 
 - [x] Repositorio en GitHub: https://github.com/JContador/ERP-Fauna-para-Chile (main)
 - [x] Proyecto Next.js + TypeScript + Tailwind + shadcn/ui
-- [ ] Proyectos Supabase (staging y producción)
-- [ ] Drizzle + migraciones del modelo de datos núcleo
+- [~] Proyectos Supabase (staging conectado y migrado; producción creada pero aún sin migrar)
+- [x] Drizzle + migraciones del modelo de datos núcleo (12 tablas aplicadas en staging)
 - [ ] Autenticación con roles
 - [ ] Despliegue automático en Vercel
 - [x] `docs/decisiones.md` y `docs/glosario.md`
@@ -57,9 +57,26 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 - Estructura de módulos creada en `src/modules/`: `inventario`, `clientes`, `pedidos`, `conciliaciones`, `finanzas`, `dashboard` (cada uno con un `.gitkeep` mientras están vacíos). Carpeta `src/db/` reservada para el esquema y config de Drizzle (aún vacía).
 - shadcn/ui inicializado con configuración por defecto (`components.json`, `src/components/ui/`, `src/lib/utils.ts`).
 - `npm run build` corre sin errores como verificación de que el scaffold quedó sano.
-- Aún no se ha corrido `npm run dev` para revisión visual, ni se ha hecho el primer commit.
+- Aún no se ha corrido `npm run dev` para revisión visual.
 - Node.js/npm y Git ya están instalados en la máquina del usuario (Node v26.5.0, npm 11.17.0, Git 2.55.0).
+
+### Base de datos (Fase 0)
+
+- Esquema núcleo en `src/db/schema.ts` (12 tablas), conexión en `src/db/index.ts`, config en `drizzle.config.ts`.
+- Comandos: `npm run db:generate` (crea archivos de migración), `npm run db:migrate` (aplica a la BD), `npm run db:studio` (explorador visual).
+- Migración `0000_dear_crystal.sql` **ya aplicada en staging**. Producción todavía NO migrada.
+- Proyecto Supabase staging: `fauna-staging` (ref: ersafmjngakjwzpadxbn). Producción: `fauna-produccion` (creado, sin conectar).
+- **Pendiente de seguridad:** la contraseña de la BD de staging parece poco segura (nombre+fecha). Cambiarla por una aleatoria antes de producción.
+- `.env.local` tiene las credenciales de STAGING. Falta un `.env` separado o estrategia para producción (se define al desplegar en Vercel).
+
+### Próximos pasos sugeridos (resto de Fase 0)
+
+1. Autenticación con Supabase Auth + roles (admin/operador), vinculando `usuarios` con `auth.users`.
+2. Despliegue en Vercel (conectar el repo, variables de entorno, apuntar a staging).
+3. Migrar el esquema también a producción y verificar backups (R4).
 
 ## Última sesión
 
-**2026-07-15** — Se recibió y guardó el plan maestro v1.0. Se crearon `CLAUDE.md`, `docs/decisiones.md` y `docs/glosario.md`. Se inicializó el repositorio Git local, se generó el proyecto Next.js + TypeScript + Tailwind + shadcn/ui, y se creó la estructura de carpetas por módulo (`src/modules/*`). Falta: primer commit, conectar GitHub, y decidir con el equipo las cuentas de Supabase/Vercel a usar.
+**2026-07-16** — Fase 0 avanzando. Se conectó el proyecto a Supabase staging, se configuró Drizzle ORM, se escribió el esquema completo del modelo de datos núcleo (12 tablas, sección 5 del plan) y se aplicó la primera migración en staging (verificadas las 12 tablas). Se documentaron las decisiones de diseño del esquema en `docs/decisiones.md`. Falta: autenticación, despliegue en Vercel y migrar producción.
+
+**2026-07-15** — Se recibió y guardó el plan maestro v1.0. Se crearon `CLAUDE.md`, `docs/decisiones.md` y `docs/glosario.md`. Se inicializó el repositorio Git local, se generó el proyecto Next.js + TypeScript + Tailwind + shadcn/ui, se creó la estructura de carpetas por módulo (`src/modules/*`), y se conectó el repositorio en GitHub (https://github.com/JContador/ERP-Fauna-para-Chile).

@@ -49,3 +49,33 @@ Se definió el plan completo del proyecto junto al equipo de Fauna para Chile. L
 **Qué se decidió:** pruebas automatizadas obligatorias solo para cálculo de stock, deducción de ventas en conciliaciones y generación de movimientos. El resto del sistema (formularios, vistas, CRUD simple) itera sin exigir cobertura de tests.
 
 **Por qué:** esa lógica es la que, si falla, produce números de inventario o ventas incorrectos — el error más caro posible en este sistema. El resto del código es más fácil de verificar simplemente usándolo.
+
+---
+
+## 2026-07-16 — Base de datos conectada y esquema núcleo creado (Fase 0)
+
+Se conectó el proyecto a Supabase (staging), se configuró Drizzle ORM y se escribió el esquema completo del modelo de datos núcleo (sección 5 del plan) en `src/db/schema.ts`. Se generó la primera migración con las 12 tablas.
+
+### Identificadores: se usa UUID en vez de números correlativos
+
+**Qué se decidió:** cada fila (producto, cliente, movimiento, etc.) se identifica con un UUID (un código largo aleatorio como `a1b2c3d4-...`) generado automáticamente, en vez de números 1, 2, 3...
+
+**Por qué:** es el estándar de Supabase y calza con cómo Supabase Auth identifica a los usuarios. Además evita exponer cuántos registros hay (con números correlativos, un cliente "N°3" revela que solo hay 3) y facilita una eventual sincronización con el ecommerce en el futuro.
+
+### La tabla `usuarios` se apoya en Supabase Auth
+
+**Qué se decidió:** el login (correo, contraseña, sesión) lo maneja Supabase Auth en su propia tabla interna (`auth.users`). Nuestra tabla `usuarios` guarda solo el perfil (nombre, rol admin/operador) y usa el mismo id que Supabase Auth para vincularse.
+
+**Por qué:** no reinventamos la seguridad de autenticación (que es difícil y riesgosa de hacer bien), y a la vez mantenemos en nuestra base de datos el rol de cada persona para controlar qué puede hacer. La conexión concreta entre ambas tablas se implementa en la fase de autenticación.
+
+### Los movimientos usan `origen` y `destino` que pueden estar vacíos
+
+**Qué se decidió:** cada movimiento de inventario tiene un origen y un destino, y cualquiera de los dos puede quedar vacío. El stock de una ubicación se calcula como: (suma de lo que llegó a esa ubicación) − (suma de lo que salió de ella).
+
+**Por qué:** así un mismo modelo simple cubre todos los casos sin tablas extra: una "carga inicial" tiene destino pero no origen (el stock aparece); una "venta" tiene origen pero no destino (el stock sale del sistema); un "despacho" tiene ambos (bodega → tienda). Esto hace realidad la decisión D1/D2 de calcular el stock desde los movimientos.
+
+### Montos con dos decimales (numeric 12,2)
+
+**Qué se decidió:** los montos de dinero (costo, precio, facturas, pagos) se guardan con capacidad de dos decimales.
+
+**Por qué:** aunque el peso chileno no usa centavos, guardar con decimales evita problemas de redondeo y deja el sistema preparado para la visión de largo plazo de adaptarlo a otras pymes que sí podrían necesitarlos, sin cambiar la base de datos.
