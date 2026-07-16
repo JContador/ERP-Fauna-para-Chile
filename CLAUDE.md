@@ -48,7 +48,7 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 - [~] Proyectos Supabase (staging conectado y migrado; producción creada pero aún sin migrar)
 - [x] Drizzle + migraciones del modelo de datos núcleo (12 tablas aplicadas en staging)
 - [x] Autenticación con roles (login Supabase Auth + roles admin/operador, probado end-to-end en staging)
-- [ ] Despliegue automático en Vercel
+- [~] Despliegue automático en Vercel (desplegado apuntando a STAGING; falta ambiente de producción)
 - [x] `docs/decisiones.md` y `docs/glosario.md`
 
 ### Notas técnicas para próximas sesiones
@@ -79,13 +79,23 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 - **Cómo crear el primer usuario admin:** ver `docs/como-crear-usuarios.md`.
 - Limitación conocida: borrar un usuario de Supabase Auth deja su perfil huérfano en `usuarios` (ver decisiones.md).
 
-### Próximos pasos sugeridos (resto de Fase 0)
+### Despliegue (Fase 0)
 
-1. Despliegue en Vercel (conectar el repo, variables de entorno, apuntar a staging).
-2. Migrar el esquema también a producción y verificar backups (R4).
-3. Crear el/los usuarios reales del equipo y asignar el rol admin.
+- App desplegada en Vercel: https://erp-fauna-para-chile.vercel.app (proyecto Vercel importado desde el repo GitHub, auto-deploy en cada push a `main`).
+- Las 4 variables de entorno están cargadas en Vercel (Production and Preview), apuntando a la base de datos de **STAGING**.
+- **Importante — DATABASE_URL en Vercel usa el Transaction Pooler** (host `...pooler.supabase.com:6543`), no la conexión directa. La conexión directa no sirve bien en Vercel (serverless). El `db/index.ts` ya usa `prepare: false`, requisito del pooler.
+- Verificado end-to-end en la web real: login correcto entra y muestra el rol (o sea, el pooler funciona desde Vercel).
+- OJO: hoy Vercel (producción del deploy) apunta a la BD de staging. Falta separar: un ambiente Vercel para staging y otro para la BD de producción real.
+
+### Próximos pasos sugeridos (cerrar Fase 0)
+
+1. **Crear el usuario admin real** (el equipo): ver `docs/como-crear-usuarios.md`. Crear usuario en Supabase Auth y correr el UPDATE para rol admin.
+2. Separar ambiente de producción: migrar el esquema a `fauna-produccion` (con respaldo R4) y crear un deployment/variables de Vercel que apunten a esa BD. Recién ahí se cumple el criterio de aceptación de Fase 0 (entrar en staging Y producción).
+3. Cambiar la contraseña de la BD de staging por una más segura (pendiente de seguridad anotado).
 
 ## Última sesión
+
+**2026-07-16 (parte 3)** — App desplegada en Vercel (https://erp-fauna-para-chile.vercel.app) importando el repo de GitHub, con las 4 variables de entorno apuntando a la BD de staging vía Transaction Pooler (puerto 6543, necesario para serverless). Verificado end-to-end en la web real: el login funciona en producción. Falta para cerrar Fase 0: crear el usuario admin real y separar el ambiente de producción (BD `fauna-produccion`).
 
 **2026-07-16 (parte 2)** — Autenticación con roles lista. Login con Supabase Auth (`@supabase/ssr`), protección de rutas con `proxy.ts` (Next.js 16 renombró middleware→proxy; `cookies()` ahora es async), roles admin/operador vía tabla `usuarios` + trigger que crea el perfil al registrar. Probado end-to-end en el navegador (login ok, login incorrecto, logout, protección). Documentado en decisiones.md y glosario.md. Falta de Fase 0: despliegue en Vercel y migrar producción.
 
