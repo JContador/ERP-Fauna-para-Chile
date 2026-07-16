@@ -79,3 +79,33 @@ Se conectó el proyecto a Supabase (staging), se configuró Drizzle ORM y se esc
 **Qué se decidió:** los montos de dinero (costo, precio, facturas, pagos) se guardan con capacidad de dos decimales.
 
 **Por qué:** aunque el peso chileno no usa centavos, guardar con decimales evita problemas de redondeo y deja el sistema preparado para la visión de largo plazo de adaptarlo a otras pymes que sí podrían necesitarlos, sin cambiar la base de datos.
+
+---
+
+## 2026-07-16 — Autenticación con roles (Fase 0)
+
+Se implementó el inicio de sesión con Supabase Auth y el control de roles (admin/operador). Probado de punta a punta: login correcto, login incorrecto, protección de páginas privadas y cierre de sesión.
+
+### El "middleware" ahora se llama `proxy.ts` (Next.js 16)
+
+**Qué se decidió:** la lógica que se ejecuta antes de cada página (refrescar la sesión y redirigir al login a quien no ha entrado) vive en `src/proxy.ts`.
+
+**Por qué:** Next.js 16 renombró el antiguo `middleware.ts` a `proxy.ts`. El `AGENTS.md` del proyecto advierte que esta versión tiene cambios respecto a versiones anteriores; se revisó la documentación incluida en `node_modules/next/dist/docs/` antes de programar. Otro cambio de esta versión: la función `cookies()` ahora es asíncrona (se usa con `await`).
+
+### La sesión se valida en el servidor con `getUser()`, no `getSession()`
+
+**Qué se decidió:** para saber si alguien realmente tiene sesión válida, el servidor pregunta a Supabase con `getUser()`.
+
+**Por qué:** `getSession()` lee la cookie sin verificarla y podría falsificarse; `getUser()` valida contra el servidor de Supabase. La autorización (quién puede entrar) se decide en el servidor, no solo en la interfaz, como pide la sección 7 del plan.
+
+### Perfil y rol: se crean solos al registrar un usuario (trigger)
+
+**Qué se decidió:** cuando el administrador crea un usuario nuevo, un "disparador" en la base de datos crea automáticamente su fila en `usuarios` con rol "operador". El administrador luego promueve a quien corresponda a "admin".
+
+**Por qué:** garantiza que todo el que puede iniciar sesión tenga siempre un perfil y un rol, sin pasos manuales que se puedan olvidar. El rol admin se asigna a mano a propósito, para que nadie quede como administrador por accidente.
+
+### Limitación conocida: perfiles huérfanos al borrar un usuario
+
+**Qué pasa:** si se borra un usuario del login de Supabase, su fila en `usuarios` NO se borra sola (queda "huérfana"), porque nuestra tabla no está enlazada con borrado en cascada al sistema de login de Supabase.
+
+**Por qué se deja así por ahora:** enlazar ambas tablas con cascada requiere tocar el esquema interno de Supabase (`auth.users`), lo que agrega complejidad. Con 3-5 usuarios que casi nunca se borran, no es urgente. Queda anotado como mejora futura (agregar un trigger de borrado o limpieza periódica).

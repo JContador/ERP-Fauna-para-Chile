@@ -8,6 +8,13 @@
       "when": 1784211832802,
       "tag": "0000_dear_crystal",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784218302378,
+      "tag": "0001_trigger_perfil_usuario",
+      "breakpoints": true
     }
   ]
 }

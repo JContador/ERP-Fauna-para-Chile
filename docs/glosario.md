@@ -29,3 +29,15 @@ Términos técnicos usados en el proyecto, explicados en simple para el equipo. 
 **SKU** — código único que identifica un producto específico (por ejemplo, una polera talla M de un diseño en particular).
 
 **Rol (admin/operador)** — el tipo de usuario dentro del sistema. Define qué puede hacer cada persona (por ejemplo, un operador registra despachos, un administrador además puede ver reportes financieros).
+
+**Autenticación** — el proceso de verificar que eres quien dices ser (iniciar sesión con tu correo y contraseña). Lo maneja Supabase Auth.
+
+**Autorización** — decidir qué puede hacer o ver cada persona una vez que inició sesión. En este sistema depende del rol (admin/operador) y se verifica en el servidor.
+
+**Sesión** — el "estado de haber iniciado sesión". Mientras tu sesión está activa, el sistema te reconoce sin pedirte la contraseña en cada página. Se guarda de forma segura en una cookie del navegador.
+
+**Cookie** — un pequeño dato que el navegador guarda para recordar cosas entre páginas, como que ya iniciaste sesión.
+
+**Proxy (antes "middleware")** — código que se ejecuta antes de mostrar cada página. Aquí lo usamos para refrescar tu sesión y para mandar al login a quien intente entrar sin haber iniciado sesión. En Next.js 16 este archivo se llama `proxy.ts` (en versiones anteriores se llamaba `middleware.ts`).
+
+**Trigger (disparador)** — una acción automática que la base de datos ejecuta sola cuando ocurre algo. Ejemplo: cuando se crea un usuario nuevo, un trigger le crea automáticamente su perfil con rol "operador".

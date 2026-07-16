@@ -47,7 +47,7 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 - [x] Proyecto Next.js + TypeScript + Tailwind + shadcn/ui
 - [~] Proyectos Supabase (staging conectado y migrado; producción creada pero aún sin migrar)
 - [x] Drizzle + migraciones del modelo de datos núcleo (12 tablas aplicadas en staging)
-- [ ] Autenticación con roles
+- [x] Autenticación con roles (login Supabase Auth + roles admin/operador, probado end-to-end en staging)
 - [ ] Despliegue automático en Vercel
 - [x] `docs/decisiones.md` y `docs/glosario.md`
 
@@ -69,14 +69,26 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 - **Pendiente de seguridad:** la contraseña de la BD de staging parece poco segura (nombre+fecha). Cambiarla por una aleatoria antes de producción.
 - `.env.local` tiene las credenciales de STAGING. Falta un `.env` separado o estrategia para producción (se define al desplegar en Vercel).
 
+### Autenticación (Fase 0)
+
+- Login con Supabase Auth (`@supabase/ssr`). Clientes en `src/lib/supabase/` (client.ts navegador, server.ts servidor, proxy.ts sesión).
+- `src/proxy.ts` (en Next.js 16 reemplaza a `middleware.ts`): refresca sesión y protege rutas. Rutas públicas: `/login`, `/auth`.
+- Login: `src/app/login/page.tsx` + `src/app/login/actions.ts` (server actions iniciarSesion/cerrarSesion).
+- `src/lib/auth.ts`: `obtenerUsuarioActual()` une la sesión con la tabla `usuarios` para traer el rol.
+- Trigger `on_auth_user_created` (migración 0001): crea el perfil en `usuarios` con rol "operador" al registrar un usuario.
+- **Cómo crear el primer usuario admin:** ver `docs/como-crear-usuarios.md`.
+- Limitación conocida: borrar un usuario de Supabase Auth deja su perfil huérfano en `usuarios` (ver decisiones.md).
+
 ### Próximos pasos sugeridos (resto de Fase 0)
 
-1. Autenticación con Supabase Auth + roles (admin/operador), vinculando `usuarios` con `auth.users`.
-2. Despliegue en Vercel (conectar el repo, variables de entorno, apuntar a staging).
-3. Migrar el esquema también a producción y verificar backups (R4).
+1. Despliegue en Vercel (conectar el repo, variables de entorno, apuntar a staging).
+2. Migrar el esquema también a producción y verificar backups (R4).
+3. Crear el/los usuarios reales del equipo y asignar el rol admin.
 
 ## Última sesión
 
-**2026-07-16** — Fase 0 avanzando. Se conectó el proyecto a Supabase staging, se configuró Drizzle ORM, se escribió el esquema completo del modelo de datos núcleo (12 tablas, sección 5 del plan) y se aplicó la primera migración en staging (verificadas las 12 tablas). Se documentaron las decisiones de diseño del esquema en `docs/decisiones.md`. Falta: autenticación, despliegue en Vercel y migrar producción.
+**2026-07-16 (parte 2)** — Autenticación con roles lista. Login con Supabase Auth (`@supabase/ssr`), protección de rutas con `proxy.ts` (Next.js 16 renombró middleware→proxy; `cookies()` ahora es async), roles admin/operador vía tabla `usuarios` + trigger que crea el perfil al registrar. Probado end-to-end en el navegador (login ok, login incorrecto, logout, protección). Documentado en decisiones.md y glosario.md. Falta de Fase 0: despliegue en Vercel y migrar producción.
+
+**2026-07-16 (parte 1)** — Se conectó el proyecto a Supabase staging, se configuró Drizzle ORM, se escribió el esquema completo del modelo de datos núcleo (12 tablas, sección 5 del plan) y se aplicó la primera migración en staging (verificadas las 12 tablas). Se documentaron las decisiones de diseño del esquema en `docs/decisiones.md`.
 
 **2026-07-15** — Se recibió y guardó el plan maestro v1.0. Se crearon `CLAUDE.md`, `docs/decisiones.md` y `docs/glosario.md`. Se inicializó el repositorio Git local, se generó el proyecto Next.js + TypeScript + Tailwind + shadcn/ui, se creó la estructura de carpetas por módulo (`src/modules/*`), y se conectó el repositorio en GitHub (https://github.com/JContador/ERP-Fauna-para-Chile).
