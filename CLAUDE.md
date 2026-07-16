@@ -43,7 +43,7 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 
 **Fase actual: Fase 0 — Fundaciones (en curso).**
 
-- [ ] Repositorio en GitHub (repo Git local ya existe, falta conectar remoto)
+- [x] Repositorio en GitHub: https://github.com/JContador/ERP-Fauna-para-Chile (main)
 - [x] Proyecto Next.js + TypeScript + Tailwind + shadcn/ui
 - [ ] Proyectos Supabase (staging y producción)
 - [ ] Drizzle + migraciones del modelo de datos núcleo
