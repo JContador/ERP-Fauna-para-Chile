@@ -73,10 +73,13 @@ export const tipoMovimiento = pgEnum("tipo_movimiento", [
 ]);
 
 // De qué documento nació un movimiento (para poder rastrearlo).
+// "correccion" = movimiento inverso generado por el botón "Deshacer"; los
+// reportes de operación real deben excluir estos (referencia_tipo <> 'correccion').
 export const referenciaMovimiento = pgEnum("referencia_movimiento", [
   "pedido",
   "conciliacion",
   "manual",
+  "correccion",
 ]);
 
 // Modalidad de la conciliación: contada en persona o reportada a distancia.

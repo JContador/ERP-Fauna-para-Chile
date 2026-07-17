@@ -1,0 +1,1 @@
+ALTER TYPE "public"."referencia_movimiento" ADD VALUE 'correccion';

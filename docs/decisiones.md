@@ -179,3 +179,39 @@ Tras revisar la tienda web real (faunaparachile.com/tienda, 66 productos), se aj
 **Qué se decidió:** igual que los productos, una ubicación se desactiva en vez de eliminarse.
 
 **Por qué:** los movimientos de inventario (Paso 3) van a referenciar ubicaciones como origen y destino. Si una ubicación se borrara, se rompería el historial de esos movimientos (mismo principio que D2).
+
+---
+
+## 2026-07-17 — Movimientos, cálculo de stock y "Deshacer" (Fase 1, paso 3) ⭐
+
+El corazón técnico del sistema (D1, D2, D10). Lógica de negocio crítica separada en funciones puras y probada con tests automatizados (Vitest, `npm test`).
+
+### El stock nunca queda negativo en el origen de un movimiento
+
+**Qué se decidió:** antes de registrar cualquier movimiento que reste stock de una ubicación (despacho, venta, devolución, traspaso, ajuste de salida), el sistema verifica que haya stock suficiente. Si no lo hay, rechaza el movimiento con un mensaje claro (ej: "quedan 30 unidades, se intentan mover 200").
+
+**Por qué:** la sección 5 del plan pide explícitamente que el stock nunca sea negativo en bodega. Se generalizó la regla a cualquier ubicación (no solo bodega): un número de stock negativo no tiene significado físico real y sería la señal de un error de tipeo o de un proceso mal seguido. Es más seguro bloquear y pedir que se investigue, que dejar que el sistema muestre un número imposible.
+
+### Los errores no se editan: se corrigen con "Deshacer" (movimiento inverso)
+
+**Qué se decidió:** siguiendo D2 al pie de la letra, un movimiento nunca se edita ni se borra. Para corregir un error, el botón "Deshacer" genera automáticamente un movimiento inverso (mismo producto y cantidad, origen/destino invertidos).
+
+**Por qué:** así se mantiene un historial 100% confiable (ambas filas quedan, la original y su corrección), que es justo lo que después permite confiar en las conciliaciones mensuales. Hacerlo con un botón (en vez de pedir al operador que calcule el reverso a mano) evita que la rigidez del sistema se sienta como fricción innecesaria para errores de tipeo comunes.
+
+### Las correcciones quedan marcadas para excluirlas de la analítica futura
+
+**Qué se decidió:** el movimiento generado por "Deshacer" siempre se guarda con tipo `ajuste` y `referencia_tipo = "correccion"`, apuntando (`referencia_id`) al movimiento original que corrige.
+
+**Por qué:** el equipo pidió poder diferenciar, más adelante, "operación real" de "correcciones", para que reportes y dashboards (Fase 4) no muestren mermas artificiales que en realidad son solo el arreglo de un error de tipeo. Cualquier reporte futuro simplemente filtra `referencia_tipo <> 'correccion'`. Además, guardar el `referencia_id` deja trazabilidad exacta de qué corrigió a qué.
+
+### Reglas de seguridad del botón "Deshacer"
+
+**Qué se decidió:** (1) un movimiento ya deshecho no se puede volver a deshacer (el botón desaparece); (2) una corrección tampoco se puede deshacer (para no encadenar reversos); (3) el "Deshacer" pasa por la misma validación de stock que cualquier movimiento — si el stock ya se movió de nuevo entre medio, se rechaza con un mensaje explicando por qué.
+
+**Por qué:** protege contra el caso en que alguien deshaga un despacho después de que parte de ese stock ya se vendió en la tienda — deshacerlo a ciegas dejaría el sistema en un estado inconsistente. El mensaje de error guía a resolverlo con un ajuste manual explicado.
+
+### Lógica de negocio separada en funciones puras (D10, sección 7 del plan)
+
+**Qué se decidió:** el cálculo de stock (`calculo-stock.ts`) y las validaciones de forma de un movimiento (`validaciones.ts`) son funciones puras, sin acceso a la base de datos, con tests automatizados. La parte que sí toca la base de datos (consultas, verificación de stock real, inserción) vive aparte en `queries.ts` y `actions.ts`.
+
+**Por qué:** es exactamente lo que pide la sección 7 del plan ("la lógica de negocio crítica vive en funciones puras separadas de la interfaz, para poder testearla de forma aislada") y D10 ("testing quirúrgico: solo lógica crítica"). Se agregó Vitest como herramienta de testing — liviana y estándar para proyectos Next.js/TypeScript.

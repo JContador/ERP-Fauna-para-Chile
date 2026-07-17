@@ -51,3 +51,9 @@ Términos técnicos usados en el proyecto, explicados en simple para el equipo. 
 **Variante** — una versión de un mismo diseño, por ejemplo el mismo animal en tamaño Mini (4 cm) o Grande (8 cm). En este sistema, por ahora, cada variante se registra como un producto separado (con su propio SKU e inventario).
 
 **Tema / identidad visual** — el conjunto de colores y tipografías que definen cómo se ve el sistema. Están centralizados en un solo archivo (`globals.css`), inspirados en la web de Fauna para Chile, para que un cambio de marca se haga en un solo lugar.
+
+**Función pura** — una función que no depende de "el mundo exterior" (no lee ni escribe en la base de datos, no depende de la hora actual, etc.) y que, dada la misma entrada, siempre da la misma salida. Son fáciles de probar con tests automáticos porque no requieren preparar una base de datos.
+
+**Test / prueba automatizada** — un pequeño programa que verifica que una función se comporta como se espera, ejecutándola con distintos casos (incluyendo casos raros o límite) y comparando el resultado. Se corren con `npm test`. Este proyecto solo los exige para la lógica más delicada (cálculo de stock, validaciones de movimientos), según la regla D10.
+
+**Movimiento inverso ("Deshacer")** — la forma correcta de corregir un error en el libro de movimientos: en vez de editar la fila equivocada, se agrega una nueva fila que revierte su efecto (mismo producto y cantidad, origen y destino invertidos). Queda registrada como una "corrección", ligada al movimiento que arregla.

@@ -24,9 +24,10 @@ const modulos = [
     disponible: true,
   },
   {
-    nombre: "Inventario",
-    descripcion: "Stock por ubicación y libro de movimientos.",
-    disponible: false,
+    nombre: "Movimientos",
+    descripcion: "Libro de inventario: registrar y deshacer movimientos.",
+    href: "/movimientos",
+    disponible: true,
   },
   {
     nombre: "Clientes",

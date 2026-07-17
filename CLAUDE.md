@@ -58,7 +58,7 @@ Todo lo demás sigue requiriendo confirmación explícita en el chat, en particu
 Plan de pasos de la Fase 1 (uno por sesión, R6):
 - [x] Paso 1 — Productos (catálogo CRUD) ✔ + mejoras según catálogo real (precio mayorista, categorías tabla, estilo de marca)
 - [x] Paso 2 — Ubicaciones (bodega, punto de venta, feria) ✔ probado end-to-end
-- [ ] Paso 3 — Movimientos + cálculo de stock (⭐ con tests, D10)
+- [x] Paso 3 — Movimientos + cálculo de stock ⭐ con tests (D10) ✔ probado end-to-end
 - [ ] Paso 4 — Vista de stock por ubicación y total
 - [ ] Paso 5 — Carga inicial del inventario real (requiere conteo físico de bodega)
 - [ ] Paso 6 — Fotos de productos (Supabase Storage)
@@ -129,6 +129,21 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 - El campo `cliente_id` existe en el esquema pero el formulario **no lo pide todavía** (Clientes es Fase 2). Cuando se construya Clientes, agregar el selector aquí.
 - `listarUbicacionesActivas()` en queries.ts queda lista para el Paso 3 (elegir origen/destino de un movimiento).
 
+### Módulo de movimientos y stock (Fase 1, paso 3) ⭐
+
+- Estructura: `src/modules/inventario/movimientos/`:
+  - `calculo-stock.ts` + `.test.ts` — función pura, calcula stock sumando/restando movimientos.
+  - `validaciones.ts` + `.test.ts` — funciones puras: valida cantidad, valida combinación tipo/origen/destino, genera el movimiento inverso (`crearMovimientoInverso`).
+  - `queries.ts` — lecturas: movimientos recientes (con nombres resueltos), stock de un producto en una ubicación, ids ya corregidos.
+  - `actions.ts` — `registrarMovimiento` (valida forma + stock suficiente antes de insertar) y `deshacerMovimiento` (genera el inverso, mismo chequeo de stock).
+  - `formulario-movimiento.tsx` (**totalmente controlado por React** — ver nota de bug abajo) y `boton-deshacer.tsx`.
+- Rutas: `/movimientos` (listado con botón Deshacer), `/movimientos/nuevo`.
+- **Testing:** se agregó Vitest (`npm test`). 20 tests sobre `calculo-stock` y `validaciones`. Comando: `npm test` → `vitest run`.
+- **Tipos de movimiento y combinación de ubicaciones exigida** (`validaciones.ts`): carga_inicial=solo destino; despacho/devolucion/traspaso=origen y destino distintos; venta=solo origen; ajuste=exactamente uno de los dos (con un toggle "Entrada/Salida" en el form que decide cuál).
+- **"Deshacer"**: crea un movimiento con `tipo: "ajuste"`, `referencia_tipo: "correccion"`, `referencia_id: <id original>`. Reportes futuros deben filtrar `referencia_tipo <> 'correccion'` para ver solo operación real. No se puede deshacer una corrección, ni deshacer dos veces el mismo movimiento (se verifica con `listarIdsYaCorregidos`).
+- **Regla de integridad:** ningún movimiento puede dejar el stock del origen en negativo (se generalizó más allá de "bodega" a cualquier ubicación). Se valida en el servidor antes de insertar, tanto al registrar como al deshacer.
+- **Bug encontrado y corregido durante pruebas:** un `<select>` controlado por React + `form.reset()` nativo se desincronizan (el navegador revierte visualmente a la opción que tenía el atributo HTML `selected` en el primer render, aunque el estado de React sea otro). Solución: TODOS los campos del formulario de movimiento son controlados por `useState` y se limpian explícitamente con `setState("")`, sin usar `formRef.current.reset()`. Tener presente este patrón para futuros formularios con selects dinámicos.
+
 ### Identidad visual (marca)
 
 - Tema alineado a faunaparachile.com: primario naranja terracota `#D35400`, texto azul pizarra, en `src/app/globals.css` (variables oklch, light + dark).
@@ -147,7 +162,9 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 
 ## Última sesión
 
-**2026-07-17** — Paso 2 de la Fase 1: módulo de ubicaciones completo (bodega, punto de venta, feria) con CRUD, desactivar en vez de borrar, y agregado al menú/panel principal. Probado end-to-end en navegador (crear, editar tipo, desactivar/activar). Decisión: el vínculo a cliente se deja pendiente hasta que exista el módulo de Clientes (Fase 2), para no adelantar alcance. Falta commit/push.
+**2026-07-17 (parte 2)** — Paso 3 de la Fase 1 (⭐ el corazón técnico): libro de movimientos con cálculo de stock, botón "Deshacer" (movimiento inverso marcado como corrección, ligado al original), y validación de stock nunca negativo. Lógica crítica en funciones puras con 20 tests automatizados (Vitest instalado, `npm test`). Probado end-to-end en navegador: carga inicial, despacho, bloqueo por stock insuficiente, deshacer, y verificación de que no se puede deshacer dos veces. Se encontró y corrigió un bug real (desincronización de un `<select>` controlado con `form.reset()` nativo — ver nota técnica arriba). Se autorizó de forma permanente (ver sección de Autorizaciones) que Claude haga push a GitHub y migre staging sin pedir confirmación cada vez. Falta: Paso 4 (vista de stock), Paso 5 (carga inicial real), Paso 6 (fotos).
+
+**2026-07-17 (parte 1)** — Paso 2 de la Fase 1: módulo de ubicaciones completo (bodega, punto de venta, feria) con CRUD, desactivar en vez de borrar, y agregado al menú/panel principal. Probado end-to-end en navegador (crear, editar tipo, desactivar/activar). Decisión: el vínculo a cliente se deja pendiente hasta que exista el módulo de Clientes (Fase 2), para no adelantar alcance. Falta commit/push.
 
 **2026-07-16 (parte 5)** — Mejoras al módulo de productos tras revisar la tienda real (faunaparachile.com). Se agregó **precio mayorista** (separado del de venta), se convirtió la **categoría** en tabla con desplegable + página de gestión `/categorias` (7 categorías sembradas), y se aplicó la **identidad visual de la marca** (naranja terracota, serif DM Serif Display, Inter). Variantes de tamaño = productos separados (decisión del equipo). Verificado end-to-end en navegador (login, crear producto con categoría+2 precios, listado con nuevas columnas, edición pre-llenada, agregar/desactivar categoría y que desaparezca del desplegable). Se notó que el usuario ya había creado un producto real de prueba en la app (`LL0001 Llavero Martin Pescador`) — se dejó intacto. Falta commit/push.
 

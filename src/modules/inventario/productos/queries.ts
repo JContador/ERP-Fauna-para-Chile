@@ -28,6 +28,16 @@ export async function listarProductos() {
     .orderBy(desc(productos.activo), asc(productos.nombre));
 }
 
+// Productos activos, para desplegables donde no tiene sentido elegir uno
+// desactivado (ej: registrar un movimiento nuevo).
+export async function listarProductosActivos() {
+  return db
+    .select({ id: productos.id, sku: productos.sku, nombre: productos.nombre })
+    .from(productos)
+    .where(eq(productos.activo, true))
+    .orderBy(asc(productos.nombre));
+}
+
 // Un producto por su id, o undefined si no existe.
 export async function obtenerProducto(id: string) {
   const filas = await db
