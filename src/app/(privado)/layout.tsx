@@ -44,6 +44,9 @@ export default async function LayoutPrivado({
               <Link href="/movimientos" className="hover:text-foreground">
                 Movimientos
               </Link>
+              <Link href="/stock" className="hover:text-foreground">
+                Stock
+              </Link>
             </nav>
           </div>
 

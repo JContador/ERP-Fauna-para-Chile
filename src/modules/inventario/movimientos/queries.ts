@@ -2,10 +2,14 @@
 // Consultas de movimientos y stock (solo lectura).
 // =============================================================================
 
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, asc, desc, eq, or } from "drizzle-orm";
 import { db } from "@/db";
 import { movimientos, productos, ubicaciones, usuarios } from "@/db/schema";
-import { calcularStock } from "./calculo-stock";
+import {
+  calcularStock,
+  calcularStockPorProductoYUbicacion,
+  claveStock,
+} from "./calculo-stock";
 
 // Movimientos recientes, con nombres legibles (producto, ubicaciones, usuario)
 // en vez de solo ids, para mostrar en el listado.
@@ -79,4 +83,48 @@ export async function obtenerStock(productoId: string, ubicacionId: string): Pro
     );
 
   return calcularStock(filas, ubicacionId);
+}
+
+// -----------------------------------------------------------------------------
+// Matriz de stock: cada producto activo × cada ubicación activa, más el total.
+// -----------------------------------------------------------------------------
+// Nota de rendimiento: se traen TODOS los movimientos y se calcula en una sola
+// pasada en memoria (calcularStockPorProductoYUbicacion). Para el volumen de
+// este negocio (decenas de productos, pocas ubicaciones) es más simple y
+// suficientemente rápido que agregar en SQL; si el volumen crece mucho en el
+// futuro, se puede reemplazar por una agregación SQL sin cambiar esta interfaz.
+export async function obtenerMatrizStock() {
+  const [productosActivos, ubicacionesActivas, filasMovimientos] = await Promise.all([
+    db
+      .select({ id: productos.id, sku: productos.sku, nombre: productos.nombre })
+      .from(productos)
+      .where(eq(productos.activo, true))
+      .orderBy(asc(productos.nombre)),
+    db
+      .select({ id: ubicaciones.id, nombre: ubicaciones.nombre, tipo: ubicaciones.tipo })
+      .from(ubicaciones)
+      .where(eq(ubicaciones.activa, true))
+      .orderBy(asc(ubicaciones.tipo), asc(ubicaciones.nombre)),
+    db
+      .select({
+        productoId: movimientos.productoId,
+        origenId: movimientos.origenId,
+        destinoId: movimientos.destinoId,
+        cantidad: movimientos.cantidad,
+      })
+      .from(movimientos),
+  ]);
+
+  const stockPorClave = calcularStockPorProductoYUbicacion(filasMovimientos);
+
+  const filas = productosActivos.map((producto) => {
+    const stockPorUbicacion = ubicacionesActivas.map((ubicacion) => ({
+      ubicacionId: ubicacion.id,
+      stock: stockPorClave.get(claveStock(producto.id, ubicacion.id)) ?? 0,
+    }));
+    const total = stockPorUbicacion.reduce((suma, u) => suma + u.stock, 0);
+    return { producto, stockPorUbicacion, total };
+  });
+
+  return { ubicaciones: ubicacionesActivas, filas };
 }

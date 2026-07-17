@@ -215,3 +215,19 @@ El corazón técnico del sistema (D1, D2, D10). Lógica de negocio crítica sepa
 **Qué se decidió:** el cálculo de stock (`calculo-stock.ts`) y las validaciones de forma de un movimiento (`validaciones.ts`) son funciones puras, sin acceso a la base de datos, con tests automatizados. La parte que sí toca la base de datos (consultas, verificación de stock real, inserción) vive aparte en `queries.ts` y `actions.ts`.
 
 **Por qué:** es exactamente lo que pide la sección 7 del plan ("la lógica de negocio crítica vive en funciones puras separadas de la interfaz, para poder testearla de forma aislada") y D10 ("testing quirúrgico: solo lógica crítica"). Se agregó Vitest como herramienta de testing — liviana y estándar para proyectos Next.js/TypeScript.
+
+---
+
+## 2026-07-17 — Vista de stock (Fase 1, paso 4)
+
+### El cálculo se hace en memoria (JavaScript), no con una consulta SQL de agregación
+
+**Qué se decidió:** para mostrar el stock de todos los productos en todas las ubicaciones, el sistema trae todos los movimientos de una vez y calcula todo en una sola pasada en el servidor (función pura `calcularStockPorProductoYUbicacion`), en vez de pedirle a la base de datos que sume con SQL.
+
+**Por qué:** para el tamaño de este negocio (decenas de productos, pocas ubicaciones), es más simple de mantener y de testear, y suficientemente rápido. Si en el futuro el volumen de movimientos crece mucho, se puede reemplazar el "adentro" de esa función por una consulta SQL de agregación sin cambiar cómo la usa el resto del sistema — quedó anotado como mejora futura, no se construye ahora (evitar over-engineering).
+
+### El total de stock solo suma ubicaciones activas
+
+**Qué se decidió:** la columna "Total" de la vista de stock suma el stock únicamente en las ubicaciones que están activas hoy. Si una ubicación se desactiva y le quedaba stock, ese stock deja de aparecer en el total (se avisa con una nota en la pantalla).
+
+**Por qué:** mantiene la vista simple y consistente con las columnas que se muestran (evita un total que no coincide con la suma de lo visible). Desactivar una ubicación con stock pendiente es un caso que se resolverá formalmente con el proceso de conciliación (Fase 3); por ahora, queda documentado como una limitación conocida.

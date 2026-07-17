@@ -1,9 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { calcularStock } from "./calculo-stock";
+import {
+  calcularStock,
+  calcularStockPorProductoYUbicacion,
+  claveStock,
+} from "./calculo-stock";
 
 const BODEGA = "bodega-1";
 const TIENDA = "tienda-1";
 const OTRA = "otra-ubicacion";
+const PROD_A = "producto-a";
+const PROD_B = "producto-b";
 
 describe("calcularStock", () => {
   it("devuelve 0 sin movimientos", () => {
@@ -76,5 +82,55 @@ describe("calcularStock", () => {
       { origenId: null, destinoId: OTRA, cantidad: 999 },
     ];
     expect(calcularStock(movimientos, BODEGA)).toBe(0);
+  });
+});
+
+describe("calcularStockPorProductoYUbicacion", () => {
+  it("devuelve un mapa vacío sin movimientos", () => {
+    expect(calcularStockPorProductoYUbicacion([]).size).toBe(0);
+  });
+
+  it("calcula el stock de varios productos y ubicaciones en una sola pasada", () => {
+    const movimientos = [
+      { productoId: PROD_A, origenId: null, destinoId: BODEGA, cantidad: 100 },
+      { productoId: PROD_A, origenId: BODEGA, destinoId: TIENDA, cantidad: 30 },
+      { productoId: PROD_B, origenId: null, destinoId: BODEGA, cantidad: 50 },
+    ];
+    const stock = calcularStockPorProductoYUbicacion(movimientos);
+
+    expect(stock.get(claveStock(PROD_A, BODEGA))).toBe(70);
+    expect(stock.get(claveStock(PROD_A, TIENDA))).toBe(30);
+    expect(stock.get(claveStock(PROD_B, BODEGA))).toBe(50);
+    // Producto B nunca se movió a la tienda: no debería tener una entrada.
+    expect(stock.has(claveStock(PROD_B, TIENDA))).toBe(false);
+  });
+
+  it("no mezcla el stock de un producto con el de otro en la misma ubicación", () => {
+    const movimientos = [
+      { productoId: PROD_A, origenId: null, destinoId: BODEGA, cantidad: 10 },
+      { productoId: PROD_B, origenId: null, destinoId: BODEGA, cantidad: 999 },
+    ];
+    const stock = calcularStockPorProductoYUbicacion(movimientos);
+    expect(stock.get(claveStock(PROD_A, BODEGA))).toBe(10);
+    expect(stock.get(claveStock(PROD_B, BODEGA))).toBe(999);
+  });
+
+  it("da el mismo resultado que calcularStock() para una combinación individual", () => {
+    const movimientosStock = [
+      { origenId: null, destinoId: BODEGA, cantidad: 100 },
+      { origenId: BODEGA, destinoId: TIENDA, cantidad: 30 },
+      { origenId: TIENDA, destinoId: BODEGA, cantidad: 5 },
+    ];
+    const movimientosConProducto = movimientosStock.map((m) => ({
+      ...m,
+      productoId: PROD_A,
+    }));
+
+    const stockIndividual = calcularStock(movimientosStock, TIENDA);
+    const stockMatriz = calcularStockPorProductoYUbicacion(movimientosConProducto).get(
+      claveStock(PROD_A, TIENDA),
+    );
+
+    expect(stockMatriz).toBe(stockIndividual);
   });
 });

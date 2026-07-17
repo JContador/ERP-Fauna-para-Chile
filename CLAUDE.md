@@ -59,7 +59,7 @@ Plan de pasos de la Fase 1 (uno por sesión, R6):
 - [x] Paso 1 — Productos (catálogo CRUD) ✔ + mejoras según catálogo real (precio mayorista, categorías tabla, estilo de marca)
 - [x] Paso 2 — Ubicaciones (bodega, punto de venta, feria) ✔ probado end-to-end
 - [x] Paso 3 — Movimientos + cálculo de stock ⭐ con tests (D10) ✔ probado end-to-end
-- [ ] Paso 4 — Vista de stock por ubicación y total
+- [x] Paso 4 — Vista de stock por ubicación y total ✔ probado end-to-end
 - [ ] Paso 5 — Carga inicial del inventario real (requiere conteo físico de bodega)
 - [ ] Paso 6 — Fotos de productos (Supabase Storage)
 
@@ -144,6 +144,13 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 - **Regla de integridad:** ningún movimiento puede dejar el stock del origen en negativo (se generalizó más allá de "bodega" a cualquier ubicación). Se valida en el servidor antes de insertar, tanto al registrar como al deshacer.
 - **Bug encontrado y corregido durante pruebas:** un `<select>` controlado por React + `form.reset()` nativo se desincronizan (el navegador revierte visualmente a la opción que tenía el atributo HTML `selected` en el primer render, aunque el estado de React sea otro). Solución: TODOS los campos del formulario de movimiento son controlados por `useState` y se limpian explícitamente con `setState("")`, sin usar `formRef.current.reset()`. Tener presente este patrón para futuros formularios con selects dinámicos.
 
+### Vista de stock (Fase 1, paso 4)
+
+- `calcularStockPorProductoYUbicacion` + `claveStock` en `calculo-stock.ts` (con tests): calcula el stock de TODOS los productos en TODAS las ubicaciones en una sola pasada sobre los movimientos (clave `"${productoId}::${ubicacionId}"`).
+- `obtenerMatrizStock()` en `movimientos/queries.ts`: trae productos activos, ubicaciones activas y todos los movimientos, arma la matriz. Nota de rendimiento documentada in situ (se puede migrar a agregación SQL si el volumen crece).
+- Página `/stock`: tabla producto × ubicación + columna Total. El total solo suma ubicaciones activas (ver decisiones.md).
+- Verificado end-to-end con 2 productos × 2 ubicaciones × 3 movimientos: los números cuadraron exactamente.
+
 ### Identidad visual (marca)
 
 - Tema alineado a faunaparachile.com: primario naranja terracota `#D35400`, texto azul pizarra, en `src/app/globals.css` (variables oklch, light + dark).
@@ -161,6 +168,8 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 4. Backlog UI: convertir categoría de producto en lista con sugerencias cuando el equipo la estabilice.
 
 ## Última sesión
+
+**2026-07-17 (parte 3)** — Paso 4 de la Fase 1: vista de stock (`/stock`), matriz producto × ubicación + total, calculada con una nueva función pura `calcularStockPorProductoYUbicacion` (4 tests nuevos, 24 en total). Verificado end-to-end con datos reales insertados directo en la BD: los números de stock por ubicación y el total cuadraron exactamente. Falta: Paso 5 (carga inicial real) y Paso 6 (fotos de productos) para cerrar la Fase 1.
 
 **2026-07-17 (parte 2)** — Paso 3 de la Fase 1 (⭐ el corazón técnico): libro de movimientos con cálculo de stock, botón "Deshacer" (movimiento inverso marcado como corrección, ligado al original), y validación de stock nunca negativo. Lógica crítica en funciones puras con 20 tests automatizados (Vitest instalado, `npm test`). Probado end-to-end en navegador: carga inicial, despacho, bloqueo por stock insuficiente, deshacer, y verificación de que no se puede deshacer dos veces. Se encontró y corrigió un bug real (desincronización de un `<select>` controlado con `form.reset()` nativo — ver nota técnica arriba). Se autorizó de forma permanente (ver sección de Autorizaciones) que Claude haga push a GitHub y migre staging sin pedir confirmación cada vez. Falta: Paso 4 (vista de stock), Paso 5 (carga inicial real), Paso 6 (fotos).
 

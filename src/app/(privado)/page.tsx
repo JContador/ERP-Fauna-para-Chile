@@ -30,6 +30,12 @@ const modulos = [
     disponible: true,
   },
   {
+    nombre: "Stock",
+    descripcion: "Cuánto hay de cada producto, por ubicación y en total.",
+    href: "/stock",
+    disponible: true,
+  },
+  {
     nombre: "Clientes",
     descripcion: "Puntos de venta, contactos y notas.",
     disponible: false,
