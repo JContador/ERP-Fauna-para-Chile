@@ -30,6 +30,18 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 - **R7** — Una fase cierra solo cuando su criterio de aceptación se cumple con datos reales y el equipo la usó.
 - **R8** — Ante instrucciones que contradicen el plan, señalarlo y preguntar antes de ejecutar.
 
+## Autorizaciones permanentes (dadas por Javier el 2026-07-17)
+
+Estas acciones NO requieren pedir confirmación en el chat; se ejecutan directo siempre que el paso previo (build/typecheck, o verificación end-to-end) haya pasado:
+
+- **Subir a GitHub (`git push`)** al repositorio `JContador/ERP-Fauna-para-Chile`, rama `main`, después de cada avance verificado (build sin errores).
+- **Migraciones de base de datos en STAGING** (`fauna-staging` / `npm run db:migrate` apuntando a `.env.local`).
+
+Todo lo demás sigue requiriendo confirmación explícita en el chat, en particular:
+- Migraciones o cualquier cambio en la base de datos de **PRODUCCIÓN**.
+- Operaciones destructivas de Git (force push, reset --hard, etc.) — nunca se autorizan de antemano.
+- Crear/modificar cuentas, servicios externos o configuración de Vercel/Supabase que no sea solo aplicar una migración ya generada.
+
 ## Roadmap (ver plan completo para detalle)
 
 0. Fundaciones — infra, esquema núcleo, auth.
