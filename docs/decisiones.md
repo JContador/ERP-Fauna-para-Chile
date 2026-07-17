@@ -133,3 +133,33 @@ Primera funcionalidad de negocio: crear, ver, editar y desactivar productos. Pro
 **Qué se decidió:** la categoría del producto se escribe libremente (ej: "Peluches", "Poleras"), sin una lista predefinida.
 
 **Por qué:** el equipo aún no fija su lista de categorías. Empezar con texto libre permite cargar el catálogo real ya; cuando las categorías se estabilicen, se puede convertir en una lista cerrada con sugerencias (mejora anotada en backlog).
+
+---
+
+## 2026-07-16 — Mejoras al módulo de productos según catálogo real
+
+Tras revisar la tienda web real (faunaparachile.com/tienda, 66 productos), se ajustó el módulo de productos a cómo son los productos de verdad.
+
+### Precio mayorista separado del precio de venta
+
+**Qué se decidió:** cada producto guarda dos precios: **precio de venta** (público, el de la web) y **precio mayorista** (el que se cobra a tiendas B2B). El costo ya existía.
+
+**Por qué:** el negocio vende por canal mayorista y retail a precios distintos (alineado con D3, canal del pedido). Tener ambos permite calcular correctamente los totales de un pedido según su canal y la rentabilidad por canal.
+
+### Las variantes de tamaño se manejan como productos separados (Opción A)
+
+**Qué se decidió:** un mismo diseño en distintos tamaños (ej: Gato Huiña Mini 4 cm y Grande 8 cm) se registra como **productos separados**, cada uno con su propio SKU, precio e inventario. NO se creó una estructura de "producto con variantes".
+
+**Por qué:** el equipo eligió esta opción por simplicidad y porque calza con el modelo del plan (sección 5). En bodega, cada tamaño es un objeto físico distinto que se cuenta por separado, así que el inventario los distingue igual. Si en el futuro se necesita agrupar tamaños bajo un mismo diseño (para reportes), se puede migrar a variantes. Se recomienda una convención de SKU que deje clara la relación (ej: `HUINA-MINI`, `HUINA-GRANDE`).
+
+### Categorías como tabla (lista fija pero extensible)
+
+**Qué se decidió:** las categorías (Figuras 3D, Mini Fauna, Llaveros 3D, Botellas, Cuadernos de Campo, Libros, Descargables) dejaron de ser texto libre y ahora son una **tabla** (`categorias`). El producto elige su categoría de un desplegable. Hay una página `/categorias` donde el equipo puede agregar o desactivar categorías sin tocar el código.
+
+**Por qué:** el equipo ya tiene sus 7 categorías definidas, así que un desplegable evita errores de tipeo y mantiene el catálogo ordenado; pero como tabla (no lista fija en el código), pueden ampliarla ellos mismos en el futuro.
+
+### Estilo visual alineado con la marca
+
+**Qué se decidió:** el ERP adoptó la identidad visual de faunaparachile.com de forma sobria: color principal **naranja terracota (#D35400)**, texto azul pizarra, títulos en tipografía serif **DM Serif Display** y cuerpo en **Inter**. Se aplicó vía variables de tema (`globals.css`), así que un cambio futuro de marca es un solo lugar.
+
+**Por qué:** el equipo pidió mantener línea visual con su web para que el sistema se sienta parte de Fauna para Chile. Se mantuvo sobrio (es una herramienta de trabajo, no la tienda), usando el naranja solo como acento en botones y enlaces.

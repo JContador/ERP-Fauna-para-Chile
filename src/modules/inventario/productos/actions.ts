@@ -30,9 +30,10 @@ function validarCampos(formData: FormData) {
 
   const sku = String(formData.get("sku") ?? "").trim().toUpperCase();
   const nombre = String(formData.get("nombre") ?? "").trim();
-  const categoria = String(formData.get("categoria") ?? "").trim();
+  const categoriaId = String(formData.get("categoriaId") ?? "").trim();
   const costoTexto = String(formData.get("costo") ?? "").trim();
   const precioTexto = String(formData.get("precio") ?? "").trim();
+  const precioMayoristaTexto = String(formData.get("precioMayorista") ?? "").trim();
   const pesoTexto = String(formData.get("pesoGramos") ?? "").trim();
   const dimensiones = String(formData.get("dimensiones") ?? "").trim();
 
@@ -56,6 +57,7 @@ function validarCampos(formData: FormData) {
 
   const costo = parsearMonto(costoTexto, "costo");
   const precio = parsearMonto(precioTexto, "precio");
+  const precioMayorista = parsearMonto(precioMayoristaTexto, "precioMayorista");
 
   let pesoGramos: number | null = null;
   if (pesoTexto) {
@@ -72,9 +74,10 @@ function validarCampos(formData: FormData) {
     valores: {
       sku,
       nombre,
-      categoria: categoria || null,
+      categoriaId: categoriaId || null,
       costo,
       precio,
+      precioMayorista,
       pesoGramos,
       dimensiones: dimensiones || null,
     },

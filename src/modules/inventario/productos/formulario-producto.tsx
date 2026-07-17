@@ -17,18 +17,22 @@ import type { EstadoFormulario } from "./actions";
 type ValoresIniciales = {
   sku?: string;
   nombre?: string;
-  categoria?: string | null;
+  categoriaId?: string | null;
   costo?: string | null;
   precio?: string | null;
+  precioMayorista?: string | null;
   pesoGramos?: number | null;
   dimensiones?: string | null;
 };
+
+type Categoria = { id: string; nombre: string };
 
 type Props = {
   accion: (
     previo: EstadoFormulario | undefined,
     formData: FormData,
   ) => Promise<EstadoFormulario>;
+  categorias: Categoria[];
   valores?: ValoresIniciales;
   textoBoton: string;
 };
@@ -54,7 +58,15 @@ function Campo({
   );
 }
 
-export function FormularioProducto({ accion, valores = {}, textoBoton }: Props) {
+const claseSelect =
+  "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30";
+
+export function FormularioProducto({
+  accion,
+  categorias,
+  valores = {},
+  textoBoton,
+}: Props) {
   const [estado, formAction, enviando] = useActionState(accion, {});
   const errores = estado?.errores ?? {};
 
@@ -71,13 +83,20 @@ export function FormularioProducto({ accion, valores = {}, textoBoton }: Props) 
           />
         </Campo>
 
-        <Campo id="categoria" etiqueta="Categoría" error={errores.categoria}>
-          <Input
-            id="categoria"
-            name="categoria"
-            defaultValue={valores.categoria ?? ""}
-            placeholder="Ej: Poleras"
-          />
+        <Campo id="categoriaId" etiqueta="Categoría" error={errores.categoriaId}>
+          <select
+            id="categoriaId"
+            name="categoriaId"
+            defaultValue={valores.categoriaId ?? ""}
+            className={claseSelect}
+          >
+            <option value="">— Sin categoría —</option>
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
         </Campo>
       </div>
 
@@ -86,19 +105,33 @@ export function FormularioProducto({ accion, valores = {}, textoBoton }: Props) 
           id="nombre"
           name="nombre"
           defaultValue={valores.nombre ?? ""}
-          placeholder="Ej: Polera Chincol talla M"
+          placeholder="Ej: Gato Huiña (8 cm)"
           required
         />
       </Campo>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Campo id="costo" etiqueta="Costo (CLP)" error={errores.costo}>
           <Input
             id="costo"
             name="costo"
             inputMode="decimal"
             defaultValue={valores.costo ?? ""}
-            placeholder="Ej: 4500"
+            placeholder="Ej: 1500"
+          />
+        </Campo>
+
+        <Campo
+          id="precioMayorista"
+          etiqueta="Precio mayorista (CLP)"
+          error={errores.precioMayorista}
+        >
+          <Input
+            id="precioMayorista"
+            name="precioMayorista"
+            inputMode="decimal"
+            defaultValue={valores.precioMayorista ?? ""}
+            placeholder="Ej: 2500"
           />
         </Campo>
 
@@ -108,7 +141,7 @@ export function FormularioProducto({ accion, valores = {}, textoBoton }: Props) 
             name="precio"
             inputMode="decimal"
             defaultValue={valores.precio ?? ""}
-            placeholder="Ej: 12990"
+            placeholder="Ej: 4000"
           />
         </Campo>
       </div>
@@ -120,7 +153,7 @@ export function FormularioProducto({ accion, valores = {}, textoBoton }: Props) 
             name="pesoGramos"
             inputMode="numeric"
             defaultValue={valores.pesoGramos ?? ""}
-            placeholder="Ej: 250"
+            placeholder="Ej: 30"
           />
         </Campo>
 
@@ -129,7 +162,7 @@ export function FormularioProducto({ accion, valores = {}, textoBoton }: Props) 
             id="dimensiones"
             name="dimensiones"
             defaultValue={valores.dimensiones ?? ""}
-            placeholder="Ej: 30x20x2 cm"
+            placeholder="Ej: 8x4x3 cm"
           />
         </Campo>
       </div>

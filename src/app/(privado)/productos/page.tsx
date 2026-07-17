@@ -32,10 +32,8 @@ export default async function PaginaProductos() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
-            Productos
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h1 className="font-heading text-2xl text-foreground">Productos</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {lista.length === 0
               ? "El catálogo está vacío."
               : `${lista.length} producto${lista.length === 1 ? "" : "s"} en el catálogo.`}
@@ -47,7 +45,7 @@ export default async function PaginaProductos() {
       </div>
 
       {lista.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -55,7 +53,8 @@ export default async function PaginaProductos() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Categoría</TableHead>
                 <TableHead className="text-right">Costo</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
+                <TableHead className="text-right">Mayorista</TableHead>
+                <TableHead className="text-right">Venta</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -65,8 +64,11 @@ export default async function PaginaProductos() {
                 <TableRow key={p.id} className={p.activo ? "" : "opacity-60"}>
                   <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                   <TableCell className="font-medium">{p.nombre}</TableCell>
-                  <TableCell>{p.categoria ?? "—"}</TableCell>
+                  <TableCell>{p.categoriaNombre ?? "—"}</TableCell>
                   <TableCell className="text-right">{formatoCLP(p.costo)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatoCLP(p.precioMayorista)}
+                  </TableCell>
                   <TableCell className="text-right">{formatoCLP(p.precio)}</TableCell>
                   <TableCell>
                     {p.activo ? (
@@ -101,8 +103,8 @@ export default async function PaginaProductos() {
       )}
 
       {lista.length === 0 && (
-        <div className="mt-6 rounded-xl border border-dashed border-neutral-300 bg-white p-10 text-center dark:border-neutral-700 dark:bg-neutral-900">
-          <p className="text-sm text-neutral-500">
+        <div className="mt-6 rounded-xl border border-dashed border-border bg-card p-10 text-center">
+          <p className="text-sm text-muted-foreground">
             Agrega tu primer producto con el botón «Nuevo producto».
           </p>
         </div>

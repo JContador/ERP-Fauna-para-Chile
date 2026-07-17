@@ -44,7 +44,7 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 **Fase actual: Fase 1 — Productos e inventario (en curso).**
 
 Plan de pasos de la Fase 1 (uno por sesión, R6):
-- [x] Paso 1 — Productos (catálogo CRUD) ✔ probado end-to-end
+- [x] Paso 1 — Productos (catálogo CRUD) ✔ + mejoras según catálogo real (precio mayorista, categorías tabla, estilo de marca)
 - [ ] Paso 2 — Ubicaciones (bodega y puntos de venta)
 - [ ] Paso 3 — Movimientos + cálculo de stock (⭐ con tests, D10)
 - [ ] Paso 4 — Vista de stock por ubicación y total
@@ -101,10 +101,19 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 
 ### Módulo de productos (Fase 1, paso 1)
 
-- Estructura del módulo: `src/modules/inventario/productos/` (queries.ts, actions.ts, formulario-producto.tsx).
+- Estructura: `src/modules/inventario/productos/` (queries, actions, formulario) y `src/modules/inventario/categorias/` (actions, formulario).
 - Páginas privadas bajo grupo de rutas `src/app/(privado)/` con layout común (encabezado + nav + usuario/rol + logout). La home es un panel de tarjetas de módulos.
-- Rutas: `/productos` (listado), `/productos/nuevo`, `/productos/[id]/editar`.
-- Productos se desactivan, no se borran. SKU único y normalizado a mayúsculas. Categoría texto libre. Montos formateados como CLP con `Intl.NumberFormat("es-CL")`.
+- Rutas: `/productos` (listado), `/productos/nuevo`, `/productos/[id]/editar`, `/categorias` (gestión).
+- Productos se desactivan, no se borran. SKU único y normalizado a mayúsculas. Montos CLP con `Intl.NumberFormat("es-CL")`.
+- **Dos precios:** `precio` (venta al público) y `precioMayorista` (B2B). Más `costo`.
+- **Categorías = tabla** `categorias` (no enum), elegida por desplegable; se pueden agregar/desactivar desde `/categorias`. Seed inicial: `npm run db:seed:categorias` (script `scripts/seed-categorias.mjs`, idempotente).
+- **Variantes de tamaño (Mini/Grande):** se modelan como productos separados (Opción A elegida por el equipo), no como variantes de un producto.
+
+### Identidad visual (marca)
+
+- Tema alineado a faunaparachile.com: primario naranja terracota `#D35400`, texto azul pizarra, en `src/app/globals.css` (variables oklch, light + dark).
+- Fuentes: cuerpo **Inter**, títulos **DM Serif Display** (via `next/font/google` en `layout.tsx`). Clase `font-heading` para títulos; variable `--font-serif`.
+- Al crear pantallas nuevas, usar colores del tema (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-card`, `border-border`, `text-primary`) en vez de `neutral-*` hardcodeado, para respetar la marca y el modo oscuro.
 - **Nota técnica shadcn/Base UI:** esta versión de shadcn usa Base UI (no Radix). Los botones NO soportan `asChild`; se usa `render={<Link href=... />}`. Tener presente al agregar componentes.
 - **Nota técnica Drizzle:** los errores de BD llegan envueltos; el error real de Postgres está en `err.cause` (ej: `cause.code === "23505"` para unicidad violada).
 - En Next.js 16, `params` de páginas dinámicas es una promesa (`await params`).
@@ -117,6 +126,8 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 4. Backlog UI: convertir categoría de producto en lista con sugerencias cuando el equipo la estabilice.
 
 ## Última sesión
+
+**2026-07-16 (parte 5)** — Mejoras al módulo de productos tras revisar la tienda real (faunaparachile.com). Se agregó **precio mayorista** (separado del de venta), se convirtió la **categoría** en tabla con desplegable + página de gestión `/categorias` (7 categorías sembradas), y se aplicó la **identidad visual de la marca** (naranja terracota, serif DM Serif Display, Inter). Variantes de tamaño = productos separados (decisión del equipo). Verificado end-to-end en navegador (login, crear producto con categoría+2 precios, listado con nuevas columnas, edición pre-llenada, agregar/desactivar categoría y que desaparezca del desplegable). Se notó que el usuario ya había creado un producto real de prueba en la app (`LL0001 Llavero Martin Pescador`) — se dejó intacto. Falta commit/push.
 
 **2026-07-16 (parte 4)** — Fase 1 iniciada: catálogo de productos completo (listar, crear, editar, desactivar/activar) con validaciones en servidor y mensajes en español. Panel principal con tarjetas de módulos y layout privado con navegación. Usuario admin real creado por el equipo (contadorlabbe@gmail.com, verificado rol=admin). Probado end-to-end en navegador; se detectó y corrigió un bug real (error de SKU duplicado no se capturaba porque Drizzle envuelve el error en `cause`). Falta commit/push de esta parte al cierre.
 

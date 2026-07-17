@@ -45,3 +45,9 @@ Términos técnicos usados en el proyecto, explicados en simple para el equipo. 
 **CRUD** — sigla en inglés de Crear, Leer (ver), Actualizar (editar) y Borrar. Es la forma corta de decir "la gestión completa de algo". Ejemplo: el CRUD de productos permite crear, ver, editar y desactivar productos. (En este sistema, la "D" de borrar suele reemplazarse por "desactivar", para no romper el historial.)
 
 **Validación** — las revisiones que hace el sistema antes de guardar algo (ej: que el SKU no esté repetido, que el precio sea un número). Si algo no cumple, el formulario lo explica con un mensaje en vez de guardar datos malos.
+
+**Precio de venta vs. precio mayorista** — el precio de venta es el que paga el público (el de la tienda web). El precio mayorista es el más bajo que se cobra a las tiendas B2B que revenden. Un producto guarda ambos.
+
+**Variante** — una versión de un mismo diseño, por ejemplo el mismo animal en tamaño Mini (4 cm) o Grande (8 cm). En este sistema, por ahora, cada variante se registra como un producto separado (con su propio SKU e inventario).
+
+**Tema / identidad visual** — el conjunto de colores y tipografías que definen cómo se ve el sistema. Están centralizados en un solo archivo (`globals.css`), inspirados en la web de Fauna para Chile, para que un cambio de marca se haga en un solo lugar.

@@ -5,7 +5,10 @@
 // =============================================================================
 
 import { notFound } from "next/navigation";
-import { obtenerProducto } from "@/modules/inventario/productos/queries";
+import {
+  obtenerProducto,
+  listarCategorias,
+} from "@/modules/inventario/productos/queries";
 import { editarProducto } from "@/modules/inventario/productos/actions";
 import { FormularioProducto } from "@/modules/inventario/productos/formulario-producto";
 
@@ -15,7 +18,10 @@ export default async function PaginaEditarProducto({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const producto = await obtenerProducto(id);
+  const [producto, categorias] = await Promise.all([
+    obtenerProducto(id),
+    listarCategorias(),
+  ]);
   if (!producto) notFound();
 
   // Fijamos el id en la acción para que el formulario no tenga que conocerlo.
@@ -28,20 +34,20 @@ export default async function PaginaEditarProducto({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
-        Editar producto
-      </h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className="font-heading text-2xl text-foreground">Editar producto</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         {producto.sku} — {producto.nombre}
       </p>
 
-      <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="mt-6 rounded-xl border border-border bg-card p-6">
         <FormularioProducto
           accion={accionConId}
+          categorias={categorias}
           valores={{
             ...producto,
             costo: montoSimple(producto.costo),
             precio: montoSimple(producto.precio),
+            precioMayorista: montoSimple(producto.precioMayorista),
           }}
           textoBoton="Guardar cambios"
         />

@@ -138,15 +138,28 @@ export const contactos = pgTable("contactos", {
 });
 
 // -----------------------------------------------------------------------------
-// productos — catálogo (SKU, categoría, costo, precio, fotos, estado)
+// categorias — lista de categorías de producto (Figuras 3D, Llaveros, etc.)
+// -----------------------------------------------------------------------------
+// Es una tabla (no una lista fija en el código) para que el equipo pueda
+// agregar categorías nuevas en el futuro sin tocar el código.
+export const categorias = pgTable("categorias", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  nombre: text("nombre").notNull().unique(),
+  activa: boolean("activa").notNull().default(true),
+  creadoEn: timestamp("creado_en", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// -----------------------------------------------------------------------------
+// productos — catálogo (SKU, categoría, costo, precios, fotos, estado)
 // -----------------------------------------------------------------------------
 export const productos = pgTable("productos", {
   id: uuid("id").primaryKey().defaultRandom(),
   sku: text("sku").notNull().unique(),
   nombre: text("nombre").notNull(),
-  categoria: text("categoria"),
+  categoriaId: uuid("categoria_id").references(() => categorias.id),
   costo: numeric("costo", { precision: 12, scale: 2 }), // lo que cuesta producirlo
-  precio: numeric("precio", { precision: 12, scale: 2 }), // precio de venta
+  precio: numeric("precio", { precision: 12, scale: 2 }), // precio de venta al público
+  precioMayorista: numeric("precio_mayorista", { precision: 12, scale: 2 }), // precio a tiendas B2B
   fotos: text("fotos").array(), // URLs de las fotos en Supabase Storage
   pesoGramos: integer("peso_gramos"),
   dimensiones: text("dimensiones"), // texto libre, ej: "10x20x5 cm"

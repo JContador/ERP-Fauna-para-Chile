@@ -47,10 +47,8 @@ const modulos = [
 export default function Home() {
   return (
     <div>
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">
-        Panel principal
-      </h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className="font-heading text-2xl text-foreground">Panel principal</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         Fase 1 en construcción: productos e inventario.
       </p>
 
@@ -70,7 +68,7 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {modulo.nombre}
-                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-normal text-neutral-500 dark:bg-neutral-800">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
                     Próximamente
                   </span>
                 </CardTitle>

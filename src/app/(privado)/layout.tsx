@@ -21,31 +21,31 @@ export default async function LayoutPrivado({
   if (!usuario) redirect("/login"); // salvaguarda extra (el proxy ya protege)
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <header className="border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-sm font-semibold text-neutral-900 dark:text-neutral-50"
+              className="font-heading text-lg text-primary"
             >
-              ERP Fauna
+              Fauna para Chile
             </Link>
-            <nav className="flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
-              <Link
-                href="/productos"
-                className="hover:text-neutral-900 dark:hover:text-neutral-100"
-              >
+            <nav className="flex items-center gap-4 text-sm text-muted-foreground">
+              <Link href="/productos" className="hover:text-foreground">
                 Productos
+              </Link>
+              <Link href="/categorias" className="hover:text-foreground">
+                Categorías
               </Link>
             </nav>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-neutral-500 sm:inline">
+            <span className="hidden text-sm text-muted-foreground sm:inline">
               {usuario.nombre ?? usuario.correo}
               {usuario.rol && (
-                <span className="text-neutral-400">
+                <span className="opacity-70">
                   {" "}
                   · {usuario.rol === "admin" ? "Administrador" : "Operador"}
                 </span>
