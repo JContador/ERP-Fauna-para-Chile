@@ -41,7 +41,19 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 
 ## Estado actual
 
-**Fase actual: Fase 0 — Fundaciones (en curso).**
+**Fase actual: Fase 1 — Productos e inventario (en curso).**
+
+Plan de pasos de la Fase 1 (uno por sesión, R6):
+- [x] Paso 1 — Productos (catálogo CRUD) ✔ probado end-to-end
+- [ ] Paso 2 — Ubicaciones (bodega y puntos de venta)
+- [ ] Paso 3 — Movimientos + cálculo de stock (⭐ con tests, D10)
+- [ ] Paso 4 — Vista de stock por ubicación y total
+- [ ] Paso 5 — Carga inicial del inventario real (requiere conteo físico de bodega)
+- [ ] Paso 6 — Fotos de productos (Supabase Storage)
+
+Decisión de proceso (validada con el equipo): producción NO se monta aún; se desarrolla la Fase 1 completa sobre staging y producción se configura cuando el equipo vaya a usar datos reales.
+
+### Fase 0 — Fundaciones (funcionalmente completa; producción pendiente a propósito)
 
 - [x] Repositorio en GitHub: https://github.com/JContador/ERP-Fauna-para-Chile (main)
 - [x] Proyecto Next.js + TypeScript + Tailwind + shadcn/ui
@@ -87,13 +99,26 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 - Verificado end-to-end en la web real: login correcto entra y muestra el rol (o sea, el pooler funciona desde Vercel).
 - OJO: hoy Vercel (producción del deploy) apunta a la BD de staging. Falta separar: un ambiente Vercel para staging y otro para la BD de producción real.
 
-### Próximos pasos sugeridos (cerrar Fase 0)
+### Módulo de productos (Fase 1, paso 1)
 
-1. **Crear el usuario admin real** (el equipo): ver `docs/como-crear-usuarios.md`. Crear usuario en Supabase Auth y correr el UPDATE para rol admin.
-2. Separar ambiente de producción: migrar el esquema a `fauna-produccion` (con respaldo R4) y crear un deployment/variables de Vercel que apunten a esa BD. Recién ahí se cumple el criterio de aceptación de Fase 0 (entrar en staging Y producción).
-3. Cambiar la contraseña de la BD de staging por una más segura (pendiente de seguridad anotado).
+- Estructura del módulo: `src/modules/inventario/productos/` (queries.ts, actions.ts, formulario-producto.tsx).
+- Páginas privadas bajo grupo de rutas `src/app/(privado)/` con layout común (encabezado + nav + usuario/rol + logout). La home es un panel de tarjetas de módulos.
+- Rutas: `/productos` (listado), `/productos/nuevo`, `/productos/[id]/editar`.
+- Productos se desactivan, no se borran. SKU único y normalizado a mayúsculas. Categoría texto libre. Montos formateados como CLP con `Intl.NumberFormat("es-CL")`.
+- **Nota técnica shadcn/Base UI:** esta versión de shadcn usa Base UI (no Radix). Los botones NO soportan `asChild`; se usa `render={<Link href=... />}`. Tener presente al agregar componentes.
+- **Nota técnica Drizzle:** los errores de BD llegan envueltos; el error real de Postgres está en `err.cause` (ej: `cause.code === "23505"` para unicidad violada).
+- En Next.js 16, `params` de páginas dinámicas es una promesa (`await params`).
+
+### Pendientes acumulados (no urgentes)
+
+1. Montar producción cuando el equipo vaya a usar datos reales: migrar esquema a `fauna-produccion` (con respaldo R4) + variables/deployment de Vercel apuntando a esa BD. Recién ahí se cumple formalmente el criterio de aceptación de Fase 0.
+2. Cambiar la contraseña de la BD de staging por una más segura (parece nombre+fecha).
+3. Personalizar el nombre del usuario admin (hoy quedó igual a su correo).
+4. Backlog UI: convertir categoría de producto en lista con sugerencias cuando el equipo la estabilice.
 
 ## Última sesión
+
+**2026-07-16 (parte 4)** — Fase 1 iniciada: catálogo de productos completo (listar, crear, editar, desactivar/activar) con validaciones en servidor y mensajes en español. Panel principal con tarjetas de módulos y layout privado con navegación. Usuario admin real creado por el equipo (contadorlabbe@gmail.com, verificado rol=admin). Probado end-to-end en navegador; se detectó y corrigió un bug real (error de SKU duplicado no se capturaba porque Drizzle envuelve el error en `cause`). Falta commit/push de esta parte al cierre.
 
 **2026-07-16 (parte 3)** — App desplegada en Vercel (https://erp-fauna-para-chile.vercel.app) importando el repo de GitHub, con las 4 variables de entorno apuntando a la BD de staging vía Transaction Pooler (puerto 6543, necesario para serverless). Verificado end-to-end en la web real: el login funciona en producción. Falta para cerrar Fase 0: crear el usuario admin real y separar el ambiente de producción (BD `fauna-produccion`).
 

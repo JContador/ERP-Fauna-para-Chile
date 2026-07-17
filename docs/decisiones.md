@@ -109,3 +109,27 @@ Se implementó el inicio de sesión con Supabase Auth y el control de roles (adm
 **Qué pasa:** si se borra un usuario del login de Supabase, su fila en `usuarios` NO se borra sola (queda "huérfana"), porque nuestra tabla no está enlazada con borrado en cascada al sistema de login de Supabase.
 
 **Por qué se deja así por ahora:** enlazar ambas tablas con cascada requiere tocar el esquema interno de Supabase (`auth.users`), lo que agrega complejidad. Con 3-5 usuarios que casi nunca se borran, no es urgente. Queda anotado como mejora futura (agregar un trigger de borrado o limpieza periódica).
+
+---
+
+## 2026-07-16 — Catálogo de productos (Fase 1, paso 1)
+
+Primera funcionalidad de negocio: crear, ver, editar y desactivar productos. Probada de punta a punta en el navegador (crear, editar, desactivar/activar, SKU duplicado, montos en pesos chilenos).
+
+### Los productos no se borran: se desactivan
+
+**Qué se decidió:** un producto puede marcarse como "inactivo" (deja de aparecer disponible), pero nunca se elimina de la base de datos.
+
+**Por qué:** los movimientos de inventario y las líneas de pedido apuntan a productos. Si se borrara un producto, su historial quedaría roto o habría que borrarlo en cascada — justo lo contrario del espíritu de D2 (el historial es sagrado). Desactivar mantiene el historial intacto.
+
+### El SKU se normaliza a mayúsculas y es único
+
+**Qué se decidió:** al guardar, el SKU se convierte a mayúsculas (escribas "pol-chincol-m" o "POL-CHINCOL-M", queda igual) y no pueden existir dos productos con el mismo SKU. Si se intenta, el formulario lo explica con un mensaje claro.
+
+**Por qué:** el SKU es el identificador que el equipo usa día a día (planillas, guías, conteos). Permitir mayúsculas/minúsculas mezcladas crearía duplicados "invisibles" (POL-1 y pol-1 parecerían distintos).
+
+### La categoría es texto libre por ahora
+
+**Qué se decidió:** la categoría del producto se escribe libremente (ej: "Peluches", "Poleras"), sin una lista predefinida.
+
+**Por qué:** el equipo aún no fija su lista de categorías. Empezar con texto libre permite cargar el catálogo real ya; cuando las categorías se estabilicen, se puede convertir en una lista cerrada con sugerencias (mejora anotada en backlog).

@@ -41,3 +41,7 @@ Términos técnicos usados en el proyecto, explicados en simple para el equipo. 
 **Proxy (antes "middleware")** — código que se ejecuta antes de mostrar cada página. Aquí lo usamos para refrescar tu sesión y para mandar al login a quien intente entrar sin haber iniciado sesión. En Next.js 16 este archivo se llama `proxy.ts` (en versiones anteriores se llamaba `middleware.ts`).
 
 **Trigger (disparador)** — una acción automática que la base de datos ejecuta sola cuando ocurre algo. Ejemplo: cuando se crea un usuario nuevo, un trigger le crea automáticamente su perfil con rol "operador".
+
+**CRUD** — sigla en inglés de Crear, Leer (ver), Actualizar (editar) y Borrar. Es la forma corta de decir "la gestión completa de algo". Ejemplo: el CRUD de productos permite crear, ver, editar y desactivar productos. (En este sistema, la "D" de borrar suele reemplazarse por "desactivar", para no romper el historial.)
+
+**Validación** — las revisiones que hace el sistema antes de guardar algo (ej: que el SKU no esté repetido, que el precio sea un número). Si algo no cumple, el formulario lo explica con un mensaje en vez de guardar datos malos.
