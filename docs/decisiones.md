@@ -163,3 +163,19 @@ Tras revisar la tienda web real (faunaparachile.com/tienda, 66 productos), se aj
 **Qué se decidió:** el ERP adoptó la identidad visual de faunaparachile.com de forma sobria: color principal **naranja terracota (#D35400)**, texto azul pizarra, títulos en tipografía serif **DM Serif Display** y cuerpo en **Inter**. Se aplicó vía variables de tema (`globals.css`), así que un cambio futuro de marca es un solo lugar.
 
 **Por qué:** el equipo pidió mantener línea visual con su web para que el sistema se sienta parte de Fauna para Chile. Se mantuvo sobrio (es una herramienta de trabajo, no la tienda), usando el naranja solo como acento en botones y enlaces.
+
+---
+
+## 2026-07-17 — Ubicaciones (Fase 1, paso 2)
+
+### Los puntos de venta se crean sin cliente vinculado todavía
+
+**Qué se decidió:** el formulario de ubicaciones permite elegir el tipo (bodega, punto de venta, feria), pero por ahora **no** pide seleccionar un cliente, aunque el modelo de datos ya tiene el campo `cliente_id` listo para eso.
+
+**Por qué:** el módulo de Clientes es la Fase 2, que todavía no se construye. Exigir un cliente ahora habría significado adelantar esa fase (scope creep, algo que el plan pide evitar explícitamente). Cuando se construya Clientes, se agregará el selector y se podrán vincular las ubicaciones tipo "punto de venta" existentes a su cliente correspondiente, sin perder nada de lo ya cargado.
+
+### Las ubicaciones tampoco se borran, se desactivan
+
+**Qué se decidió:** igual que los productos, una ubicación se desactiva en vez de eliminarse.
+
+**Por qué:** los movimientos de inventario (Paso 3) van a referenciar ubicaciones como origen y destino. Si una ubicación se borrara, se rompería el historial de esos movimientos (mismo principio que D2).

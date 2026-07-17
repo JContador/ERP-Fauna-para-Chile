@@ -18,6 +18,12 @@ const modulos = [
     disponible: true,
   },
   {
+    nombre: "Ubicaciones",
+    descripcion: "Bodega central, puntos de venta y ferias.",
+    href: "/ubicaciones",
+    disponible: true,
+  },
+  {
     nombre: "Inventario",
     descripcion: "Stock por ubicación y libro de movimientos.",
     disponible: false,

@@ -45,7 +45,7 @@ ERP ligero y modular para **Fauna para Chile** (diseño, fabricación y venta de
 
 Plan de pasos de la Fase 1 (uno por sesión, R6):
 - [x] Paso 1 — Productos (catálogo CRUD) ✔ + mejoras según catálogo real (precio mayorista, categorías tabla, estilo de marca)
-- [ ] Paso 2 — Ubicaciones (bodega y puntos de venta)
+- [x] Paso 2 — Ubicaciones (bodega, punto de venta, feria) ✔ probado end-to-end
 - [ ] Paso 3 — Movimientos + cálculo de stock (⭐ con tests, D10)
 - [ ] Paso 4 — Vista de stock por ubicación y total
 - [ ] Paso 5 — Carga inicial del inventario real (requiere conteo físico de bodega)
@@ -109,6 +109,14 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 - **Categorías = tabla** `categorias` (no enum), elegida por desplegable; se pueden agregar/desactivar desde `/categorias`. Seed inicial: `npm run db:seed:categorias` (script `scripts/seed-categorias.mjs`, idempotente).
 - **Variantes de tamaño (Mini/Grande):** se modelan como productos separados (Opción A elegida por el equipo), no como variantes de un producto.
 
+### Módulo de ubicaciones (Fase 1, paso 2)
+
+- Estructura: `src/modules/inventario/ubicaciones/` (queries, actions, formulario).
+- Rutas: `/ubicaciones` (listado), `/ubicaciones/nueva`, `/ubicaciones/[id]/editar`.
+- Tipos: bodega, punto_venta, feria (enum `tipo_ubicacion` en el esquema). Se desactivan, no se borran (mismo motivo que productos: no romper el historial de movimientos).
+- El campo `cliente_id` existe en el esquema pero el formulario **no lo pide todavía** (Clientes es Fase 2). Cuando se construya Clientes, agregar el selector aquí.
+- `listarUbicacionesActivas()` en queries.ts queda lista para el Paso 3 (elegir origen/destino de un movimiento).
+
 ### Identidad visual (marca)
 
 - Tema alineado a faunaparachile.com: primario naranja terracota `#D35400`, texto azul pizarra, en `src/app/globals.css` (variables oklch, light + dark).
@@ -126,6 +134,8 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 4. Backlog UI: convertir categoría de producto en lista con sugerencias cuando el equipo la estabilice.
 
 ## Última sesión
+
+**2026-07-17** — Paso 2 de la Fase 1: módulo de ubicaciones completo (bodega, punto de venta, feria) con CRUD, desactivar en vez de borrar, y agregado al menú/panel principal. Probado end-to-end en navegador (crear, editar tipo, desactivar/activar). Decisión: el vínculo a cliente se deja pendiente hasta que exista el módulo de Clientes (Fase 2), para no adelantar alcance. Falta commit/push.
 
 **2026-07-16 (parte 5)** — Mejoras al módulo de productos tras revisar la tienda real (faunaparachile.com). Se agregó **precio mayorista** (separado del de venta), se convirtió la **categoría** en tabla con desplegable + página de gestión `/categorias` (7 categorías sembradas), y se aplicó la **identidad visual de la marca** (naranja terracota, serif DM Serif Display, Inter). Variantes de tamaño = productos separados (decisión del equipo). Verificado end-to-end en navegador (login, crear producto con categoría+2 precios, listado con nuevas columnas, edición pre-llenada, agregar/desactivar categoría y que desaparezca del desplegable). Se notó que el usuario ya había creado un producto real de prueba en la app (`LL0001 Llavero Martin Pescador`) — se dejó intacto. Falta commit/push.
 
