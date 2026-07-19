@@ -56,7 +56,7 @@ Todo lo demás sigue requiriendo confirmación explícita en el chat, en particu
 **Fase actual: Fase 1 — Productos e inventario (en curso).**
 
 Plan de pasos de la Fase 1 (uno por sesión, R6):
-- [x] Paso 1 — Productos (catálogo CRUD) ✔ + mejoras según catálogo real (precio mayorista, categorías tabla, estilo de marca)
+- [x] Paso 1 — Productos (catálogo CRUD) ✔ + mejoras según catálogo real (precio mayorista, categorías tabla, estilo de marca) + primer feedback del equipo aplicado (sin peso, SKU sugerido, descripción, fix miles)
 - [x] Paso 2 — Ubicaciones (bodega, punto de venta, feria) ✔ probado end-to-end
 - [x] Paso 3 — Movimientos + cálculo de stock ⭐ con tests (D10) ✔ probado end-to-end
 - [x] Paso 4 — Vista de stock por ubicación y total ✔ probado end-to-end
@@ -165,9 +165,17 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 1. Montar producción cuando el equipo vaya a usar datos reales: migrar esquema a `fauna-produccion` (con respaldo R4) + variables/deployment de Vercel apuntando a esa BD. Recién ahí se cumple formalmente el criterio de aceptación de Fase 0.
 2. Cambiar la contraseña de la BD de staging por una más segura (parece nombre+fecha).
 3. Personalizar el nombre del usuario admin (hoy quedó igual a su correo).
-4. Backlog UI: convertir categoría de producto en lista con sugerencias cuando el equipo la estabilice.
+4. Feedback del equipo pendiente de aplicar (`docs/feedback/`): en Ubicaciones agregar dirección (calle, número, depto, código postal), geolocalización (link de Google Maps) y descripción.
+5. Cuando se construya Pedidos (Fase 2): agregar `costo_unitario` a `lineas_pedido` (snapshot del costo al momento de la venta, igual que ya hace `precio_unitario`), para poder calcular rentabilidad histórica real en el dashboard de Fase 4.
+6. Exportar a Excel/CSV: se deja para la Fase 4 (ya es un entregable explícito de esa fase en el plan).
+
+### Cómo procesar feedback del equipo
+
+El equipo entrega feedback en documentos Word (`docs/feedback/`, ver su `README.md`). Al recibir uno: (1) leerlo completo (incluidas imágenes/capturas) y resumir agrupado por tema; (2) señalar si algo choca con el plan antes de ejecutar (R8); (3) proponer qué abordar ahora y qué después (R6); (4) recién ahí, programar. Usar el skill `docx` para leer el documento (pandoc no está disponible en este entorno — usar `py` en vez de `python`, y extraer texto de `word/document.xml` con grep si `merge_runs.py` falla por incompatibilidad de Python 3.9).
 
 ## Última sesión
+
+**2026-07-18** — Primer feedback del equipo (`docs/feedback/Comentarios desarrollo ERP 1.0.docx`) evaluado y parcialmente aplicado. Decisiones tomadas con el usuario: SKU sugerido automático pero editable (no bloqueado), priorizar correcciones de Productos primero, exportar CSV se deja para Fase 4. Aplicado en Productos: se quitó el campo Peso (form + BD), se corrigió un bug real (los montos con "." de miles se guardaban mal, ej. "12.990" quedaba como 12,99), se agregó campo Descripción, y el SKU ahora se sugiere solo (2 letras de categoría + correlativo) pero se puede editar libremente. Todo probado end-to-end en navegador. Queda pendiente: feedback de Ubicaciones (dirección, geolocalización, descripción).
 
 **2026-07-17 (parte 3)** — Paso 4 de la Fase 1: vista de stock (`/stock`), matriz producto × ubicación + total, calculada con una nueva función pura `calcularStockPorProductoYUbicacion` (4 tests nuevos, 24 en total). Verificado end-to-end con datos reales insertados directo en la BD: los números de stock por ubicación y el total cuadraron exactamente. Falta: Paso 5 (carga inicial real) y Paso 6 (fotos de productos) para cerrar la Fase 1.
 

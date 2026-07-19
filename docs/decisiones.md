@@ -231,3 +231,43 @@ El corazón técnico del sistema (D1, D2, D10). Lógica de negocio crítica sepa
 **Qué se decidió:** la columna "Total" de la vista de stock suma el stock únicamente en las ubicaciones que están activas hoy. Si una ubicación se desactiva y le quedaba stock, ese stock deja de aparecer en el total (se avisa con una nota en la pantalla).
 
 **Por qué:** mantiene la vista simple y consistente con las columnas que se muestran (evita un total que no coincide con la suma de lo visible). Desactivar una ubicación con stock pendiente es un caso que se resolverá formalmente con el proceso de conciliación (Fase 3); por ahora, queda documentado como una limitación conocida.
+
+---
+
+## 2026-07-18 — Primer feedback del equipo aplicado (Fase 1, Productos)
+
+El equipo entregó su primer documento de feedback (`docs/feedback/`) tras probar la herramienta. Se evaluaron los 11 comentarios y se aplicaron los de Productos en esta sesión.
+
+### Se quitó el campo "Peso"
+
+**Qué se decidió:** se eliminó `peso_gramos` del formulario y de la base de datos (no solo se ocultó).
+
+**Por qué:** el equipo señaló que no lo usan en la práctica. Estaba en el modelo original del plan (sección 5: "peso/dimensiones"), pero el plan mismo invita a cuestionarlo con el uso real ("puedes proponer mejoras cuando detectes algo mejor"). Se quitó del todo (no solo de la vista) para no dejar una columna muerta sin usar.
+
+### Corrección de un bug real: los montos con punto de miles
+
+**Qué se decidió:** ahora los campos de costo y precio interpretan el punto como separador de miles (formato chileno: "12.990" = doce mil novecientos noventa) y la coma como decimal si hiciera falta.
+
+**Por qué:** antes el sistema seguía la convención inglesa (punto = decimal), así que "12.990" se guardaba como 12,99 — un error silencioso que habría distorsionado todos los precios cargados así. Se detectó gracias al feedback del equipo y se verificó con una prueba real en el navegador antes de dar por cerrado.
+
+### SKU sugerido automáticamente, pero siempre editable
+
+**Qué se decidió:** al elegir una categoría, el sistema sugiere un SKU (2 letras de la categoría + número correlativo, ej: "FI0001" para Figuras 3D). La persona puede aceptarlo o escribir el suyo; una vez que edita el campo a mano, el sistema deja de proponerle cambios aunque después cambie la categoría.
+
+**Por qué:** el equipo preguntó por un SKU automático para evitar duplicados, pero el plan valora que el equipo entienda y controle su propio sistema de codificación. La sugerencia editable da lo mejor de ambos: menos fricción para quien quiere aceptarla, sin imponer un código que no calce con su convención interna.
+
+### Campo "Descripción" agregado
+
+**Qué se decidió:** se agregó `descripcion` (texto libre, opcional) a productos.
+
+**Por qué:** pedido directo del equipo para dejar información adicional que no calza en los demás campos.
+
+### Pendiente para cuando se construya Pedidos (Fase 2)
+
+El equipo preguntó cómo evitar que los cambios de precio/costo afecten reportes de ventas pasadas. La respuesta: el modelo de `lineas_pedido` ya guarda su propio `precio_unitario` en el momento de la venta (una "foto" del precio de ese día, no una referencia al precio actual del producto), así que esto ya está resuelto por diseño. Queda anotado agregar también un `costo_unitario` a `lineas_pedido` cuando se construya Pedidos, para poder calcular rentabilidad histórica real en el dashboard de la Fase 4.
+
+### Lo que queda para después
+
+- **Fotos de producto** — ya estaba planificado como Paso 6 de esta fase.
+- **Ubicaciones** (dirección, geolocalización, descripción) — próxima sesión de feedback.
+- **Exportar a Excel/CSV** — se deja para la Fase 4, tal como está en el plan.

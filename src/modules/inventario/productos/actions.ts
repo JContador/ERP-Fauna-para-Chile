@@ -10,11 +10,11 @@
 
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { productos } from "@/db/schema";
+import { productos, categorias } from "@/db/schema";
 import { obtenerUsuarioActual } from "@/lib/auth";
 
 export type EstadoFormulario = {
@@ -34,8 +34,8 @@ function validarCampos(formData: FormData) {
   const costoTexto = String(formData.get("costo") ?? "").trim();
   const precioTexto = String(formData.get("precio") ?? "").trim();
   const precioMayoristaTexto = String(formData.get("precioMayorista") ?? "").trim();
-  const pesoTexto = String(formData.get("pesoGramos") ?? "").trim();
   const dimensiones = String(formData.get("dimensiones") ?? "").trim();
+  const descripcion = String(formData.get("descripcion") ?? "").trim();
 
   if (!sku) errores.sku = "El SKU es obligatorio.";
   else if (!/^[A-Z0-9][A-Z0-9\-_.]*$/.test(sku))
@@ -43,13 +43,15 @@ function validarCampos(formData: FormData) {
 
   if (!nombre) errores.nombre = "El nombre es obligatorio.";
 
-  // Los montos aceptan solo números (pesos chilenos, sin puntos de miles).
+  // Los montos se escriben "a la chilena": el punto separa los miles
+  // (ej: "12.990") y la coma es el decimal si hace falta (ej: "12.990,50").
+  // Por eso se quitan todos los puntos antes de convertir a número.
   const parsearMonto = (texto: string, campo: string): string | null => {
     if (!texto) return null;
-    const limpio = texto.replace(",", ".");
+    const limpio = texto.replace(/\./g, "").replace(",", ".");
     const numero = Number(limpio);
     if (Number.isNaN(numero) || numero < 0) {
-      errores[campo] = "Debe ser un número igual o mayor a 0, sin puntos de miles.";
+      errores[campo] = "Debe ser un número válido igual o mayor a 0 (ej: 12.990).";
       return null;
     }
     return limpio;
@@ -58,16 +60,6 @@ function validarCampos(formData: FormData) {
   const costo = parsearMonto(costoTexto, "costo");
   const precio = parsearMonto(precioTexto, "precio");
   const precioMayorista = parsearMonto(precioMayoristaTexto, "precioMayorista");
-
-  let pesoGramos: number | null = null;
-  if (pesoTexto) {
-    const peso = Number(pesoTexto);
-    if (!Number.isInteger(peso) || peso < 0) {
-      errores.pesoGramos = "Debe ser un número entero de gramos (ej: 250).";
-    } else {
-      pesoGramos = peso;
-    }
-  }
 
   return {
     errores,
@@ -78,8 +70,8 @@ function validarCampos(formData: FormData) {
       costo,
       precio,
       precioMayorista,
-      pesoGramos,
       dimensiones: dimensiones || null,
+      descripcion: descripcion || null,
     },
   };
 }
@@ -164,4 +156,46 @@ export async function cambiarEstadoProducto(id: string, activo: boolean) {
 
   await db.update(productos).set({ activo }).where(eq(productos.id, id));
   revalidatePath("/productos");
+}
+
+// -----------------------------------------------------------------------------
+// Sugerencia de SKU (feedback del equipo): propone un código a partir de la
+// categoría (2 letras + número correlativo), pero SIEMPRE editable — el
+// equipo puede cambiarlo antes de guardar si prefieren su propia codificación.
+// -----------------------------------------------------------------------------
+export async function sugerirSku(categoriaId: string | null): Promise<string> {
+  let prefijo = "PR";
+
+  if (categoriaId) {
+    const fila = await db
+      .select({ nombre: categorias.nombre })
+      .from(categorias)
+      .where(eq(categorias.id, categoriaId))
+      .limit(1);
+    const nombreCategoria = fila[0]?.nombre;
+    if (nombreCategoria) {
+      // normalize("NFD") separa las tildes de su letra (í -> i + acento);
+      // el siguiente replace descarta el acento junto con cualquier símbolo,
+      // dejando solo letras simples.
+      const soloLetras = nombreCategoria
+        .normalize("NFD")
+        .replace(/[^a-zA-Z]/g, "")
+        .toUpperCase();
+      if (soloLetras.length >= 2) prefijo = soloLetras.slice(0, 2);
+    }
+  }
+
+  const existentes = await db
+    .select({ sku: productos.sku })
+    .from(productos)
+    .where(like(productos.sku, `${prefijo}%`));
+
+  const patron = new RegExp(`^${prefijo}(\\d+)$`);
+  let maxNumero = 0;
+  for (const { sku } of existentes) {
+    const coincide = sku.match(patron);
+    if (coincide) maxNumero = Math.max(maxNumero, parseInt(coincide[1], 10));
+  }
+
+  return `${prefijo}${String(maxNumero + 1).padStart(4, "0")}`;
 }

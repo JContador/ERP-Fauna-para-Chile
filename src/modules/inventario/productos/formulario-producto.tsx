@@ -3,16 +3,21 @@
 // -----------------------------------------------------------------------------
 // "use client": corre en el navegador para mostrar errores sin recargar la
 // página. La acción (crear o editar) llega como prop desde la página.
+//
+// El SKU se sugiere automáticamente según la categoría (feedback del equipo),
+// pero siempre es editable: si la persona escribe algo a mano, se respeta y
+// no se vuelve a pisar aunque cambie de categoría después.
 // =============================================================================
 
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { EstadoFormulario } from "./actions";
+import { sugerirSku } from "./actions";
 
 type ValoresIniciales = {
   sku?: string;
@@ -21,8 +26,8 @@ type ValoresIniciales = {
   costo?: string | null;
   precio?: string | null;
   precioMayorista?: string | null;
-  pesoGramos?: number | null;
   dimensiones?: string | null;
+  descripcion?: string | null;
 };
 
 type Categoria = { id: string; nombre: string };
@@ -61,6 +66,9 @@ function Campo({
 const claseSelect =
   "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30";
 
+const claseTextarea =
+  "flex min-h-20 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30";
+
 export function FormularioProducto({
   accion,
   categorias,
@@ -70,6 +78,24 @@ export function FormularioProducto({
   const [estado, formAction, enviando] = useActionState(accion, {});
   const errores = estado?.errores ?? {};
 
+  const esEdicion = Boolean(valores.sku);
+  const [sku, setSku] = useState(valores.sku ?? "");
+  const [categoriaId, setCategoriaId] = useState(valores.categoriaId ?? "");
+  const skuEditadoManualmente = useRef(esEdicion); // si ya trae SKU, no lo tocamos
+
+  // Sugiere un SKU al elegir/cambiar la categoría, solo si la persona no ha
+  // escrito el suyo propio (y solo al crear, nunca al editar uno existente).
+  useEffect(() => {
+    if (esEdicion || skuEditadoManualmente.current) return;
+    let vigente = true;
+    sugerirSku(categoriaId || null).then((sugerido) => {
+      if (vigente) setSku(sugerido);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, [categoriaId, esEdicion]);
+
   return (
     <form action={formAction} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -77,8 +103,12 @@ export function FormularioProducto({
           <Input
             id="sku"
             name="sku"
-            defaultValue={valores.sku ?? ""}
-            placeholder="Ej: POL-CHINCOL-M"
+            value={sku}
+            onChange={(e) => {
+              skuEditadoManualmente.current = true;
+              setSku(e.target.value);
+            }}
+            placeholder="Se sugiere solo según la categoría"
             required
           />
         </Campo>
@@ -87,7 +117,8 @@ export function FormularioProducto({
           <select
             id="categoriaId"
             name="categoriaId"
-            defaultValue={valores.categoriaId ?? ""}
+            value={categoriaId}
+            onChange={(e) => setCategoriaId(e.target.value)}
             className={claseSelect}
           >
             <option value="">— Sin categoría —</option>
@@ -117,7 +148,7 @@ export function FormularioProducto({
             name="costo"
             inputMode="decimal"
             defaultValue={valores.costo ?? ""}
-            placeholder="Ej: 1500"
+            placeholder="Ej: 1.500"
           />
         </Campo>
 
@@ -131,7 +162,7 @@ export function FormularioProducto({
             name="precioMayorista"
             inputMode="decimal"
             defaultValue={valores.precioMayorista ?? ""}
-            placeholder="Ej: 2500"
+            placeholder="Ej: 2.500"
           />
         </Campo>
 
@@ -141,31 +172,29 @@ export function FormularioProducto({
             name="precio"
             inputMode="decimal"
             defaultValue={valores.precio ?? ""}
-            placeholder="Ej: 4000"
+            placeholder="Ej: 4.000"
           />
         </Campo>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Campo id="pesoGramos" etiqueta="Peso (gramos)" error={errores.pesoGramos}>
-          <Input
-            id="pesoGramos"
-            name="pesoGramos"
-            inputMode="numeric"
-            defaultValue={valores.pesoGramos ?? ""}
-            placeholder="Ej: 30"
-          />
-        </Campo>
+      <Campo id="dimensiones" etiqueta="Dimensiones" error={errores.dimensiones}>
+        <Input
+          id="dimensiones"
+          name="dimensiones"
+          defaultValue={valores.dimensiones ?? ""}
+          placeholder="Ej: 8x4x3 cm"
+        />
+      </Campo>
 
-        <Campo id="dimensiones" etiqueta="Dimensiones" error={errores.dimensiones}>
-          <Input
-            id="dimensiones"
-            name="dimensiones"
-            defaultValue={valores.dimensiones ?? ""}
-            placeholder="Ej: 8x4x3 cm"
-          />
-        </Campo>
-      </div>
+      <Campo id="descripcion" etiqueta="Descripción" error={errores.descripcion}>
+        <textarea
+          id="descripcion"
+          name="descripcion"
+          defaultValue={valores.descripcion ?? ""}
+          placeholder="Información adicional sobre el producto (opcional)"
+          className={claseTextarea}
+        />
+      </Campo>
 
       {estado?.error && (
         <p className="text-sm text-red-600 dark:text-red-400">{estado.error}</p>

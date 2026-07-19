@@ -164,8 +164,8 @@ export const productos = pgTable("productos", {
   precio: numeric("precio", { precision: 12, scale: 2 }), // precio de venta al público
   precioMayorista: numeric("precio_mayorista", { precision: 12, scale: 2 }), // precio a tiendas B2B
   fotos: text("fotos").array(), // URLs de las fotos en Supabase Storage
-  pesoGramos: integer("peso_gramos"),
   dimensiones: text("dimensiones"), // texto libre, ej: "10x20x5 cm"
+  descripcion: text("descripcion"), // texto libre para información adicional
   activo: boolean("activo").notNull().default(true),
   creadoEn: timestamp("creado_en", { withTimezone: true }).notNull().defaultNow(),
 });
