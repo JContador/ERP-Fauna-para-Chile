@@ -1,6 +1,6 @@
 # CLAUDE.md — ERP Fauna para Chile
 
-Este archivo resume el plan maestro (`docs/plan-maestro.md` si se guarda una copia, o el documento entregado por el equipo) para que cualquier sesión de Claude Code arranque con el contexto correcto. Léelo siempre al empezar una sesión.
+Este archivo resume el plan maestro completo, guardado en [`docs/plan-maestro.md`](docs/plan-maestro.md), para que cualquier sesión de Claude Code arranque con el contexto correcto. Léelo siempre al empezar una sesión; si necesitas el detalle completo de alguna sección (roadmap con criterios de aceptación, el proceso de conciliación paso a paso, riesgos transversales), consulta el documento completo.
 
 ## Qué es este proyecto
 
