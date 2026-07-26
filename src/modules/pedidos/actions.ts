@@ -13,8 +13,10 @@ import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { pedidos, lineasPedido } from "@/db/schema";
+import { pedidos, lineasPedido, movimientos } from "@/db/schema";
 import { obtenerUsuarioActual } from "@/lib/auth";
+import { obtenerStock } from "@/modules/inventario/movimientos/queries";
+import { obtenerUbicacionDeCliente } from "@/modules/inventario/ubicaciones/queries";
 
 export type EstadoFormulario = {
   error?: string;
@@ -187,4 +189,108 @@ export async function cancelarPedido(id: string) {
 
   revalidatePath("/pedidos");
   revalidatePath(`/pedidos/${id}`);
+}
+
+// -----------------------------------------------------------------------------
+// Despacho (Paso 3): la guía y la factura se emiten en el portal del SII como
+// siempre; acá solo se registra el folio y se generan los movimientos de
+// inventario según el canal del pedido:
+//   - concesión: "despacho" desde la bodega elegida hacia la ubicación del
+//     cliente (el stock sigue siendo del negocio hasta la conciliación).
+//   - cualquier otro canal (mayorista/web/feria): "venta" directa desde la
+//     bodega (el stock sale del sistema de inmediato).
+// -----------------------------------------------------------------------------
+
+export type EstadoDespacho = { error?: string; errores?: Record<string, string> };
+
+export async function despacharPedido(
+  id: string,
+  _previo: EstadoDespacho | undefined,
+  formData: FormData,
+): Promise<EstadoDespacho> {
+  const usuario = await obtenerUsuarioActual();
+  if (!usuario) return { error: "Tu sesión expiró. Vuelve a iniciar sesión." };
+
+  const filasPedido = await db.select().from(pedidos).where(eq(pedidos.id, id)).limit(1);
+  const pedido = filasPedido[0];
+  if (!pedido) return { error: "El pedido ya no existe." };
+  if (pedido.estado !== "confirmado") {
+    return { error: "Solo se puede despachar un pedido confirmado." };
+  }
+
+  const bodegaId = String(formData.get("bodegaId") ?? "").trim();
+  const guiaDespacho = String(formData.get("guiaDespacho") ?? "").trim();
+
+  const errores: Record<string, string> = {};
+  if (!bodegaId) errores.bodegaId = "Elige la bodega de origen.";
+  if (!guiaDespacho) errores.guiaDespacho = "Ingresa el número de guía de despacho.";
+
+  let destinoId: string | null = null;
+  const tipoMovimiento: "despacho" | "venta" = pedido.canal === "concesion" ? "despacho" : "venta";
+
+  if (pedido.canal === "concesion") {
+    if (!pedido.clienteId) {
+      errores.bodegaId = "Este pedido de concesión no tiene un cliente asociado.";
+    } else {
+      const ubicacionCliente = await obtenerUbicacionDeCliente(pedido.clienteId);
+      if (!ubicacionCliente) {
+        errores.bodegaId =
+          "El cliente no tiene una ubicación de punto de venta vinculada. Ve a Ubicaciones y vincúlala primero.";
+      } else {
+        destinoId = ubicacionCliente.id;
+      }
+    }
+  }
+
+  if (Object.keys(errores).length > 0) {
+    return { error: "Revisa los campos marcados.", errores };
+  }
+
+  const lineas = await db
+    .select({ productoId: lineasPedido.productoId, cantidad: lineasPedido.cantidad })
+    .from(lineasPedido)
+    .where(eq(lineasPedido.pedidoId, id));
+  if (lineas.length === 0) return { error: "Este pedido no tiene líneas para despachar." };
+
+  // Se agrupa por producto antes de validar el stock: si el mismo producto
+  // aparece en más de una línea, hay que exigir la suma total, no cada línea
+  // por separado contra el mismo stock actual (dejaría pasar sobregiros).
+  const cantidadPorProducto = new Map<string, number>();
+  for (const l of lineas) {
+    cantidadPorProducto.set(l.productoId, (cantidadPorProducto.get(l.productoId) ?? 0) + l.cantidad);
+  }
+
+  for (const [productoId, cantidad] of cantidadPorProducto) {
+    const stockActual = await obtenerStock(productoId, bodegaId);
+    if (cantidad > stockActual) {
+      return {
+        error: `No hay stock suficiente en la bodega elegida: quedan ${stockActual} unidades de un producto del pedido, se necesitan ${cantidad}.`,
+      };
+    }
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.insert(movimientos).values(
+      lineas.map((l) => ({
+        productoId: l.productoId,
+        origenId: bodegaId,
+        destinoId,
+        cantidad: l.cantidad,
+        tipo: tipoMovimiento,
+        usuarioId: usuario.id,
+        referenciaTipo: "pedido" as const,
+        referenciaId: id,
+      })),
+    );
+    await tx
+      .update(pedidos)
+      .set({ estado: "despachado", guiaDespacho, fechaDespacho: new Date() })
+      .where(eq(pedidos.id, id));
+  });
+
+  revalidatePath("/pedidos");
+  revalidatePath(`/pedidos/${id}`);
+  revalidatePath("/movimientos");
+  revalidatePath("/stock");
+  return {};
 }

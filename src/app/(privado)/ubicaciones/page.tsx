@@ -48,6 +48,7 @@ export default async function PaginaUbicaciones() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Cliente</TableHead>
                 <TableHead>Dirección</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -58,6 +59,14 @@ export default async function PaginaUbicaciones() {
                 <TableRow key={u.id} className={u.activa ? "" : "opacity-60"}>
                   <TableCell className="font-medium">{u.nombre}</TableCell>
                   <TableCell>{NOMBRE_TIPO[u.tipo] ?? u.tipo}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.clienteNombre ??
+                      (u.tipo === "punto_venta" ? (
+                        <span className="text-red-600 dark:text-red-400">Sin vincular</span>
+                      ) : (
+                        "—"
+                      ))}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {u.calle || u.numero ? (
                       <span>

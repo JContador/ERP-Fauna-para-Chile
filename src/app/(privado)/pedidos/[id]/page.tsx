@@ -9,7 +9,9 @@ import {
   obtenerClienteDePedido,
   obtenerLineasPedido,
 } from "@/modules/pedidos/queries";
-import { confirmarPedido, cancelarPedido } from "@/modules/pedidos/actions";
+import { confirmarPedido, cancelarPedido, despacharPedido } from "@/modules/pedidos/actions";
+import { listarBodegasActivas } from "@/modules/inventario/ubicaciones/queries";
+import { FormularioDespacho } from "@/modules/pedidos/formulario-despacho";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -61,9 +63,10 @@ export default async function PaginaDetallePedido({
   const pedido = await obtenerPedido(id);
   if (!pedido) notFound();
 
-  const [cliente, lineas] = await Promise.all([
+  const [cliente, lineas, bodegas] = await Promise.all([
     obtenerClienteDePedido(pedido.clienteId),
     obtenerLineasPedido(pedido.id),
+    pedido.estado === "confirmado" ? listarBodegasActivas() : Promise.resolve([]),
   ]);
 
   const total = lineas.reduce(
@@ -90,6 +93,13 @@ export default async function PaginaDetallePedido({
       {pedido.notas && (
         <p className="mt-4 rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground">
           {pedido.notas}
+        </p>
+      )}
+
+      {pedido.estado === "despachado" && (
+        <p className="mt-4 rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground">
+          Guía de despacho <span className="font-medium text-foreground">{pedido.guiaDespacho}</span>
+          {pedido.fechaDespacho && <> · despachado el {formatoFecha(pedido.fechaDespacho)}</>}
         </p>
       )}
 
@@ -124,6 +134,21 @@ export default async function PaginaDetallePedido({
           Total: <span className="font-medium text-foreground">{formatoCLP(total)}</span>
         </div>
       </div>
+
+      {pedido.estado === "confirmado" && (
+        <div className="mt-6">
+          <FormularioDespacho
+            accion={despacharPedido.bind(null, pedido.id)}
+            bodegas={bodegas}
+          />
+          {bodegas.length === 0 && (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+              No hay ninguna ubicación activa de tipo "bodega". Crea una en
+              Ubicaciones antes de despachar.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mt-6 flex flex-wrap gap-3">
         {pedido.estado === "borrador" && (

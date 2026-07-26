@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import type { EstadoFormulario } from "./actions";
 type ValoresIniciales = {
   nombre?: string;
   tipo?: string;
+  clienteId?: string | null;
   calle?: string | null;
   numero?: string | null;
   depto?: string | null;
@@ -22,11 +23,14 @@ type ValoresIniciales = {
   descripcion?: string | null;
 };
 
+type Cliente = { id: string; nombre: string };
+
 type Props = {
   accion: (
     previo: EstadoFormulario | undefined,
     formData: FormData,
   ) => Promise<EstadoFormulario>;
+  clientesConcesion: Cliente[];
   valores?: ValoresIniciales;
   textoBoton: string;
 };
@@ -57,9 +61,17 @@ function Campo({
   );
 }
 
-export function FormularioUbicacion({ accion, valores = {}, textoBoton }: Props) {
+export function FormularioUbicacion({
+  accion,
+  clientesConcesion,
+  valores = {},
+  textoBoton,
+}: Props) {
   const [estado, formAction, enviando] = useActionState(accion, {});
   const errores = estado?.errores ?? {};
+
+  const [tipo, setTipo] = useState(valores.tipo ?? "bodega");
+  const [clienteId, setClienteId] = useState(valores.clienteId ?? "");
 
   return (
     <form action={formAction} className="space-y-4">
@@ -77,7 +89,8 @@ export function FormularioUbicacion({ accion, valores = {}, textoBoton }: Props)
         <select
           id="tipo"
           name="tipo"
-          defaultValue={valores.tipo ?? "bodega"}
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value)}
           className={claseSelect}
           required
         >
@@ -86,10 +99,30 @@ export function FormularioUbicacion({ accion, valores = {}, textoBoton }: Props)
           <option value="feria">Feria</option>
         </select>
       </Campo>
-      <p className="-mt-2 text-xs text-muted-foreground">
-        Los puntos de venta se podrán vincular a un cliente cuando exista el
-        módulo de Clientes (Fase 2).
-      </p>
+
+      {tipo === "punto_venta" && (
+        <Campo id="clienteId" etiqueta="Cliente *" error={errores.clienteId}>
+          <select
+            id="clienteId"
+            name="clienteId"
+            value={clienteId}
+            onChange={(e) => setClienteId(e.target.value)}
+            className={claseSelect}
+            required
+          >
+            <option value="">— Elige un cliente —</option>
+            {clientesConcesion.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Solo aparecen clientes en concesión o "ambos" — son los que
+            sostienen stock propio en su ubicación.
+          </p>
+        </Campo>
+      )}
 
       <div className="space-y-4 rounded-lg border border-border p-4">
         <p className="text-sm font-medium text-foreground">Dirección (opcional)</p>

@@ -2,7 +2,7 @@
 // Consultas de clientes y contactos (solo lectura).
 // =============================================================================
 
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { clientes, contactos } from "@/db/schema";
 
@@ -20,6 +20,17 @@ export async function listarClientesActivos() {
     .select({ id: clientes.id, nombre: clientes.nombre })
     .from(clientes)
     .where(eq(clientes.estado, true))
+    .orderBy(asc(clientes.nombre));
+}
+
+// Clientes activos que operan en concesión (o ambas modalidades), para elegir
+// a quién se vincula una ubicación tipo "punto de venta" (solo ellos sostienen
+// stock propio en la ubicación del cliente; los mayoristas puros no).
+export async function listarClientesParaConcesion() {
+  return db
+    .select({ id: clientes.id, nombre: clientes.nombre })
+    .from(clientes)
+    .where(and(eq(clientes.estado, true), inArray(clientes.tipoComercial, ["concesion", "ambos"])))
     .orderBy(asc(clientes.nombre));
 }
 

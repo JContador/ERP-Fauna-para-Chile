@@ -327,3 +327,31 @@ El equipo preguntó cómo evitar que los cambios de precio/costo afecten reporte
 **Qué se decidió/corrigió:** la base de datos siempre guarda los montos con 2 decimales (ej. `"10000.00"`, por cómo Postgres almacena `numeric(12,2)`). El formulario de líneas de pedido usa la misma convención "a la chilena" que Productos (el punto separa los miles). Al precargar un precio existente tal cual desde la base de datos en un campo editable con esa convención, y guardar sin tocarlo, el punto del ".00" se interpretaba como separador de miles: "10000.00" se limpiaba a "1000000" (×100). Se corrigió con una función `formatoMontoInicial()` que convierte el valor de la base de datos a la convención editable (sin decimales si no hay centavos reales, con coma si los hay) antes de ponerlo en el campo.
 
 **Por qué se investigó también en Productos:** mismo patrón de campo de dinero, mismo riesgo aparente. Se probó en vivo (editar y guardar un producto real sin tocar el precio) y el valor en la base de datos **no se alteró**. La razón: los campos de Productos son "no controlados" por React (`defaultValue`) y el componente de interfaz normaliza el valor mostrado antes de que se envíe; los de Pedidos son controlados por React (`value` + `onChange`, necesario para el precio sugerido dinámico según el canal), lo que sí exponía el bug porque nada normalizaba el valor por debajo. No se tocó el código de Productos porque no hay bug ahí, pero queda como antecedente: cualquier campo de dinero controlado por React que se precargue desde la base de datos debe pasar por esta conversión.
+
+---
+
+## 2026-07-26 (parte 4) — Despacho (Fase 2, paso 3): sin emisión de documentos tributarios
+
+### El ERP no emite guías de despacho ni facturas; solo las registra
+
+**Qué se decidió:** al despachar un pedido, el ERP no genera un documento de guía de despacho. El equipo sigue emitiendo la guía y la factura en el portal gratuito del SII, como hace hoy; en el ERP solo se escribe a mano el número de folio ya emitido, que queda guardado en `pedidos.guia_despacho`.
+
+**Por qué:** ya estaba decidido en D6 ("finanzas solo registran, sin integración tributaria"). Se reconfirmó explícitamente con Javier antes de construir el Paso 3: emitir documentos tributarios electrónicos de verdad requiere certificarse ante el SII (certificado digital, folios CAF, webservice de intercambio) — meses de trabajo regulatorio para reemplazar una herramienta gratuita que ya funciona bien. No hay beneficio real que justifique ese riesgo y complejidad.
+
+### El vínculo ubicación↔cliente se adelantó desde el Paso 4
+
+**Qué se decidió:** el campo `ubicaciones.cliente_id` (existía en el esquema desde Fase 0, sin usarse en el formulario) se expuso en esta sesión, antes de lo planeado, en vez de esperar al Paso 4 de Fase 2 como decía el plan de pasos original.
+
+**Por qué:** al diseñar el despacho se detectó una dependencia real que el orden original de los pasos no consideraba: el despacho de un pedido de **concesión** necesita saber a qué ubicación enviar el stock, y esa ubicación es justamente la que el Paso 4 iba a vincular. Sin el vínculo, el despacho de concesión no podía funcionar. Se señaló la contradicción (R8) y, con acuerdo implícito de continuar ("avancemos al siguiente paso"), se resolvió construyendo ambas piezas juntas en la misma sesión.
+
+### Solo clientes en concesión (o "ambos") aparecen al vincular un punto de venta
+
+**Qué se decidió:** el desplegable de cliente en el formulario de ubicaciones (cuando el tipo es "punto de venta") solo lista clientes con tipo comercial "concesión" o "ambos".
+
+**Por qué:** es la conclusión directa de la aclaración conceptual de la sesión anterior (Cliente vs. Ubicación): un cliente puramente mayorista nunca sostiene stock del negocio en su propia ubicación (su venta es directa, sale del sistema de inmediato), así que no tiene sentido ofrecerlo como opción ahí. Evita vínculos sin sentido de negocio.
+
+### El stock se valida agrupando por producto, no línea por línea
+
+**Qué se decidió:** antes de despachar, si el mismo producto aparece en más de una línea del pedido, se suman las cantidades y se valida esa suma total contra el stock actual de la bodega — no se valida cada línea por separado.
+
+**Por qué:** validar línea por línea contra el mismo "stock actual" (que todavía no refleja las líneas anteriores, porque ninguna se ha insertado aún) dejaría pasar un sobregiro: dos líneas de 60 unidades cada una pasarían individualmente contra un stock de 100, sumando 120 units despachadas con solo 100 disponibles. Agrupar primero evita ese falso positivo.

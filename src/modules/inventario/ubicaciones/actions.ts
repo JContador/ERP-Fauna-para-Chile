@@ -28,6 +28,7 @@ function validarCampos(formData: FormData) {
 
   const nombre = String(formData.get("nombre") ?? "").trim();
   const tipo = String(formData.get("tipo") ?? "").trim();
+  const clienteId = String(formData.get("clienteId") ?? "").trim();
   const calle = String(formData.get("calle") ?? "").trim();
   const numero = String(formData.get("numero") ?? "").trim();
   const depto = String(formData.get("depto") ?? "").trim();
@@ -41,11 +42,18 @@ function validarCampos(formData: FormData) {
     errores.tipo = "Elige un tipo de ubicación válido.";
   }
 
+  // Un punto de venta representa la ubicación de un cliente en concesión: sin
+  // el vínculo, el despacho (Fase 2) no sabría a dónde enviar el stock.
+  if (tipo === "punto_venta" && !clienteId) {
+    errores.clienteId = "Un punto de venta necesita un cliente vinculado.";
+  }
+
   return {
     errores,
     valores: {
       nombre,
       tipo: tipo as TipoUbicacion,
+      clienteId: tipo === "punto_venta" ? clienteId || null : null,
       calle: calle || null,
       numero: numero || null,
       depto: depto || null,
