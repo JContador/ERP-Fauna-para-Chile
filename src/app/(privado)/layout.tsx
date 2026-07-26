@@ -41,6 +41,9 @@ export default async function LayoutPrivado({
               <Link href="/clientes" className="hover:text-foreground">
                 Clientes
               </Link>
+              <Link href="/pedidos" className="hover:text-foreground">
+                Pedidos
+              </Link>
               <Link href="/ubicaciones" className="hover:text-foreground">
                 Ubicaciones
               </Link>

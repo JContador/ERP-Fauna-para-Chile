@@ -43,8 +43,9 @@ const modulos = [
   },
   {
     nombre: "Pedidos",
-    descripcion: "Pedidos y despachos por canal.",
-    disponible: false,
+    descripcion: "Creación por canal y líneas de pedido.",
+    href: "/pedidos",
+    disponible: true,
   },
   {
     nombre: "Conciliaciones",

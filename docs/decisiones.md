@@ -293,3 +293,37 @@ El equipo preguntó cómo evitar que los cambios de precio/costo afecten reporte
 **Qué se decidió:** por pedido explícito de Javier, se empieza la Fase 2 (Clientes y pedidos) aunque la Fase 1 todavía tiene dos pasos abiertos: Paso 5 (carga inicial real del inventario, requiere conteo físico de bodega) y Paso 6 (fotos de producto). Formalmente esto se aparta de la regla R7 ("una fase cierra solo cuando su criterio de aceptación se cumple con datos reales y el equipo la usó").
 
 **Por qué:** el conteo físico de bodega (Paso 5) depende de que el equipo lo haga en terreno, no de trabajo de desarrollo; no tiene sentido bloquear el resto del sistema esperando esa fecha. Paso 5 y 6 quedan pendientes y se retoman cuando corresponda, sin que esto invalide el trabajo ya hecho en Fase 1 (Productos, Ubicaciones, Movimientos, Stock siguen operativos y probados).
+
+---
+
+## 2026-07-26 (parte 3) — Clientes con RUT/giro y Pedidos (Fase 2, pasos 1 y 2)
+
+### RUT como identificador único del cliente, normalizado
+
+**Qué se decidió:** el RUT es obligatorio y único (constraint de base de datos), y se normaliza al guardar (sin puntos ni espacios, ej. "12345678-9"), igual que el SKU se normaliza a mayúsculas.
+
+**Por qué:** dos personas escribiendo "12.345.678-9" y "12345678-9" no deben crear dos clientes distintos. Normalizar antes de comparar/guardar evita duplicados invisibles, mismo motivo que la normalización del SKU en productos.
+
+### Los contactos sí se borran de verdad (a diferencia de clientes/productos/ubicaciones)
+
+**Qué se decidió:** a diferencia del resto de las entidades del sistema (que se desactivan, nunca se borran), un contacto se elimina permanentemente cuando se pide.
+
+**Por qué:** el espíritu de D2 (no borrar, para no romper el historial) aplica a lo que los movimientos de inventario o pedidos referencian. Ningún movimiento ni pedido apunta a un contacto — es solo información de a quién llamar en una tienda — así que no hay historial que proteger.
+
+### El total de un pedido no se guarda, se calcula
+
+**Qué se decidió:** ni `pedidos` ni `lineas_pedido` tienen una columna "total". El total se calcula sumando `cantidad × precio_unitario` de las líneas, tanto en el listado como en el detalle.
+
+**Por qué:** mismo principio que D1 aplicado a otro número derivado: si el total fuera un campo guardado aparte, podría desincronizarse de sus líneas (ej. si una línea se edita mal). Calcularlo siempre garantiza que el total mostrado sea consistente con las líneas reales.
+
+### Un pedido solo se edita en estado "borrador"
+
+**Qué se decidió:** una vez que un pedido se confirma (o, más adelante, se despacha), sus líneas y cabecera quedan fijas. La única acción posible es cancelarlo. La validación está en el servidor (no solo se oculta el botón "Editar" en la interfaz).
+
+**Por qué:** una vez confirmado, el pedido puede tener consecuencias reales (empezar a prepararse, comprometerse con el cliente); permitir editarlo libremente después rompería la trazabilidad de qué se acordó. Si algo cambió, se cancela y se crea uno nuevo — mismo espíritu que D2 con los movimientos (no editar el historial, corregir con una acción explícita).
+
+### Bug real: precargar un monto de la base de datos en un campo "a la chilena" lo multiplicaba por 100
+
+**Qué se decidió/corrigió:** la base de datos siempre guarda los montos con 2 decimales (ej. `"10000.00"`, por cómo Postgres almacena `numeric(12,2)`). El formulario de líneas de pedido usa la misma convención "a la chilena" que Productos (el punto separa los miles). Al precargar un precio existente tal cual desde la base de datos en un campo editable con esa convención, y guardar sin tocarlo, el punto del ".00" se interpretaba como separador de miles: "10000.00" se limpiaba a "1000000" (×100). Se corrigió con una función `formatoMontoInicial()` que convierte el valor de la base de datos a la convención editable (sin decimales si no hay centavos reales, con coma si los hay) antes de ponerlo en el campo.
+
+**Por qué se investigó también en Productos:** mismo patrón de campo de dinero, mismo riesgo aparente. Se probó en vivo (editar y guardar un producto real sin tocar el precio) y el valor en la base de datos **no se alteró**. La razón: los campos de Productos son "no controlados" por React (`defaultValue`) y el componente de interfaz normaliza el valor mostrado antes de que se envíe; los de Pedidos son controlados por React (`value` + `onChange`, necesario para el precio sugerido dinámico según el canal), lo que sí exponía el bug porque nada normalizaba el valor por debajo. No se tocó el código de Productos porque no hay bug ahí, pero queda como antecedente: cualquier campo de dinero controlado por React que se precargue desde la base de datos debe pasar por esta conversión.
