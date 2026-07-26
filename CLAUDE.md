@@ -121,13 +121,14 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 - **Categorías = tabla** `categorias` (no enum), elegida por desplegable; se pueden agregar/desactivar desde `/categorias`. Seed inicial: `npm run db:seed:categorias` (script `scripts/seed-categorias.mjs`, idempotente).
 - **Variantes de tamaño (Mini/Grande):** se modelan como productos separados (Opción A elegida por el equipo), no como variantes de un producto.
 
-### Módulo de ubicaciones (Fase 1, paso 2)
+### Módulo de ubicaciones (Fase 1, paso 2 + feedback del equipo)
 
 - Estructura: `src/modules/inventario/ubicaciones/` (queries, actions, formulario).
 - Rutas: `/ubicaciones` (listado), `/ubicaciones/nueva`, `/ubicaciones/[id]/editar`.
 - Tipos: bodega, punto_venta, feria (enum `tipo_ubicacion` en el esquema). Se desactivan, no se borran (mismo motivo que productos: no romper el historial de movimientos).
 - El campo `cliente_id` existe en el esquema pero el formulario **no lo pide todavía** (Clientes es Fase 2). Cuando se construya Clientes, agregar el selector aquí.
 - `listarUbicacionesActivas()` en queries.ts queda lista para el Paso 3 (elegir origen/destino de un movimiento).
+- **Feedback del equipo aplicado (2026-07-26):** se agregaron campos opcionales de dirección (`calle`, `numero`, `depto`, `codigoPostal`), `geolocalizacion` (link de Google Maps) y `descripcion`. El listado muestra la dirección resumida y un enlace "Ver mapa" cuando hay geolocalización. Migración `0007_brown_punisher.sql` aplicada en staging.
 
 ### Módulo de movimientos y stock (Fase 1, paso 3) ⭐
 
@@ -165,15 +166,17 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 1. Montar producción cuando el equipo vaya a usar datos reales: migrar esquema a `fauna-produccion` (con respaldo R4) + variables/deployment de Vercel apuntando a esa BD. Recién ahí se cumple formalmente el criterio de aceptación de Fase 0.
 2. Cambiar la contraseña de la BD de staging por una más segura (parece nombre+fecha).
 3. Personalizar el nombre del usuario admin (hoy quedó igual a su correo).
-4. Feedback del equipo pendiente de aplicar (`docs/feedback/`): en Ubicaciones agregar dirección (calle, número, depto, código postal), geolocalización (link de Google Maps) y descripción.
-5. Cuando se construya Pedidos (Fase 2): agregar `costo_unitario` a `lineas_pedido` (snapshot del costo al momento de la venta, igual que ya hace `precio_unitario`), para poder calcular rentabilidad histórica real en el dashboard de Fase 4.
-6. Exportar a Excel/CSV: se deja para la Fase 4 (ya es un entregable explícito de esa fase en el plan).
+4. Cuando se construya Pedidos (Fase 2): agregar `costo_unitario` a `lineas_pedido` (snapshot del costo al momento de la venta, igual que ya hace `precio_unitario`), para poder calcular rentabilidad histórica real en el dashboard de Fase 4.
+5. Exportar a Excel/CSV: se deja para la Fase 4 (ya es un entregable explícito de esa fase en el plan; el feedback del equipo también lo pidió en la sección "General").
+6. Bug menor de redacción preexistente en `/ubicaciones`: el contador dice "3 ubicaciónes registradas" (con tilde de más) en vez de "ubicaciones". No se tocó por estar fuera del alcance de esta sesión.
 
 ### Cómo procesar feedback del equipo
 
 El equipo entrega feedback en documentos Word (`docs/feedback/`, ver su `README.md`). Al recibir uno: (1) leerlo completo (incluidas imágenes/capturas) y resumir agrupado por tema; (2) señalar si algo choca con el plan antes de ejecutar (R8); (3) proponer qué abordar ahora y qué después (R6); (4) recién ahí, programar. Usar el skill `docx` para leer el documento (pandoc no está disponible en este entorno — usar `py` en vez de `python`, y extraer texto de `word/document.xml` con grep si `merge_runs.py` falla por incompatibilidad de Python 3.9).
 
 ## Última sesión
+
+**2026-07-26** — Se aplicó el segundo punto pendiente del feedback del equipo: en Ubicaciones se agregaron los campos opcionales de dirección (calle, número, depto, código postal), geolocalización (link de Google Maps, mostrado como "Ver mapa" en el listado) y descripción. Esquema actualizado, migración `0007_brown_punisher.sql` generada y aplicada en staging, build sin errores, y probado end-to-end en el navegador (crear ubicación con todos los campos, verificar que aparecen en el listado, verificar que precargan al editar, desactivar el registro de prueba). Commit y push a `main`. Queda pendiente del feedback: exportar a Excel/CSV (se deja para Fase 4, según lo acordado). Fase 1 sigue con el Paso 5 (carga inicial real) y Paso 6 (fotos) abiertos.
 
 **2026-07-18** — Primer feedback del equipo (`docs/feedback/Comentarios desarrollo ERP 1.0.docx`) evaluado y parcialmente aplicado. Decisiones tomadas con el usuario: SKU sugerido automático pero editable (no bloqueado), priorizar correcciones de Productos primero, exportar CSV se deja para Fase 4. Aplicado en Productos: se quitó el campo Peso (form + BD), se corrigió un bug real (los montos con "." de miles se guardaban mal, ej. "12.990" quedaba como 12,99), se agregó campo Descripción, y el SKU ahora se sugiere solo (2 letras de categoría + correlativo) pero se puede editar libremente. Todo probado end-to-end en navegador. Queda pendiente: feedback de Ubicaciones (dirección, geolocalización, descripción).
 
