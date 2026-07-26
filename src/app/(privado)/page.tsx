@@ -37,8 +37,9 @@ const modulos = [
   },
   {
     nombre: "Clientes",
-    descripcion: "Puntos de venta, contactos y notas.",
-    disponible: false,
+    descripcion: "Ficha comercial, contactos y notas.",
+    href: "/clientes",
+    disponible: true,
   },
   {
     nombre: "Pedidos",
@@ -62,7 +63,7 @@ export default function Home() {
     <div>
       <h1 className="font-heading text-2xl text-foreground">Panel principal</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Fase 1 en construcción: productos e inventario.
+        Fase 1 (inventario) y Fase 2 (clientes y pedidos) en construcción.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

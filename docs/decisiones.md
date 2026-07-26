@@ -271,3 +271,25 @@ El equipo preguntó cómo evitar que los cambios de precio/costo afecten reporte
 - **Fotos de producto** — ya estaba planificado como Paso 6 de esta fase.
 - **Ubicaciones** (dirección, geolocalización, descripción) — próxima sesión de feedback.
 - **Exportar a Excel/CSV** — se deja para la Fase 4, tal como está en el plan.
+
+---
+
+## 2026-07-26 — Feedback de Ubicaciones aplicado; se decide avanzar a Fase 2 sin cerrar formalmente Fase 1
+
+### Ubicaciones: dirección, geolocalización y descripción
+
+**Qué se decidió:** se agregaron los campos opcionales `calle`, `numero`, `depto`, `codigo_postal`, `geolocalizacion` (link de Google Maps) y `descripcion` a la tabla `ubicaciones`, pedidos por el equipo en el feedback del 2026-07-18.
+
+**Por qué:** cerraba el pendiente de feedback de Ubicaciones que había quedado explícitamente para después en la sesión anterior.
+
+### Diferencia conceptual Cliente vs. Ubicación (aclarada con el equipo, sin cambios de diseño)
+
+**Qué se aclaró:** un **cliente** es la identidad comercial (quién); una **ubicación** es dónde puede haber stock físico propio (dónde). El vínculo `ubicaciones.cliente_id` solo tiene sentido para clientes en **concesión** (el stock despachado sigue siendo del negocio hasta que se vende, por eso figura en esa ubicación). Para ventas **mayoristas/factura directa**, el movimiento es de tipo "venta" con destino vacío: el stock sale del sistema de inmediato y nunca pasa a figurar en una ubicación del cliente.
+
+**Por qué:** el equipo preguntó si el modelo actual (D1, D3, tipos de movimiento) seguía siendo coherente al tener bodega única + clientes externos en dos modalidades (concesión y mayorista). Se confirmó que sí, sin necesidad de cambios: la distinción ya está resuelta por el tipo de movimiento ("despacho" vs. "venta"). Implicación para Fase 2: solo los clientes en concesión (o "ambos") necesitarán una ubicación tipo punto de venta asociada.
+
+### Se decide avanzar a la Fase 2 sin haber cerrado formalmente la Fase 1
+
+**Qué se decidió:** por pedido explícito de Javier, se empieza la Fase 2 (Clientes y pedidos) aunque la Fase 1 todavía tiene dos pasos abiertos: Paso 5 (carga inicial real del inventario, requiere conteo físico de bodega) y Paso 6 (fotos de producto). Formalmente esto se aparta de la regla R7 ("una fase cierra solo cuando su criterio de aceptación se cumple con datos reales y el equipo la usó").
+
+**Por qué:** el conteo físico de bodega (Paso 5) depende de que el equipo lo haga en terreno, no de trabajo de desarrollo; no tiene sentido bloquear el resto del sistema esperando esa fecha. Paso 5 y 6 quedan pendientes y se retoman cuando corresponda, sin que esto invalide el trabajo ya hecho en Fase 1 (Productos, Ubicaciones, Movimientos, Stock siguen operativos y probados).

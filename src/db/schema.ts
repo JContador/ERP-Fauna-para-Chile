@@ -117,6 +117,8 @@ export const usuarios = pgTable("usuarios", {
 export const clientes = pgTable("clientes", {
   id: uuid("id").primaryKey().defaultRandom(),
   nombre: text("nombre").notNull(),
+  rut: text("rut").notNull().unique(), // ej: "12345678-9", normalizado sin puntos
+  giro: text("giro"), // giro comercial de la empresa, opcional
   tipoComercial: tipoComercial("tipo_comercial").notNull(),
   region: text("region"),
   condiciones: text("condiciones"), // condiciones comerciales acordadas (texto libre)
