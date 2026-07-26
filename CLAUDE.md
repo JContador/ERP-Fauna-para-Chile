@@ -53,17 +53,25 @@ Todo lo demás sigue requiriendo confirmación explícita en el chat, en particu
 
 ## Estado actual
 
-**Fase actual: Fase 1 — Productos e inventario (en curso).**
+**Fases en curso: Fase 1 (Productos e inventario) y Fase 2 (Clientes y pedidos), en paralelo.**
+
+Decisión consciente del 2026-07-26 (documentada en `docs/decisiones.md`): se empezó la Fase 2 sin cerrar formalmente la Fase 1, porque el Paso 5 depende de que el equipo haga el conteo físico de bodega (no es trabajo de desarrollo) y no tenía sentido bloquear el resto del sistema esperando esa fecha. Esto se aparta de la regla R7 a propósito.
 
 Plan de pasos de la Fase 1 (uno por sesión, R6):
 - [x] Paso 1 — Productos (catálogo CRUD) ✔ + mejoras según catálogo real (precio mayorista, categorías tabla, estilo de marca) + primer feedback del equipo aplicado (sin peso, SKU sugerido, descripción, fix miles)
-- [x] Paso 2 — Ubicaciones (bodega, punto de venta, feria) ✔ probado end-to-end
+- [x] Paso 2 — Ubicaciones (bodega, punto de venta, feria) ✔ probado end-to-end + feedback del equipo aplicado (dirección, geolocalización, descripción)
 - [x] Paso 3 — Movimientos + cálculo de stock ⭐ con tests (D10) ✔ probado end-to-end
 - [x] Paso 4 — Vista de stock por ubicación y total ✔ probado end-to-end
 - [ ] Paso 5 — Carga inicial del inventario real (requiere conteo físico de bodega)
 - [ ] Paso 6 — Fotos de productos (Supabase Storage)
 
-Decisión de proceso (validada con el equipo): producción NO se monta aún; se desarrolla la Fase 1 completa sobre staging y producción se configura cuando el equipo vaya a usar datos reales.
+Plan de pasos de la Fase 2 (uno por sesión, R6):
+- [x] Paso 1 — Clientes (ficha comercial + contactos) ✔ probado end-to-end
+- [ ] Paso 2 — Pedidos (creación por canal, líneas de pedido)
+- [ ] Paso 3 — Despacho (registrar guía + generación automática de movimientos según canal: concesión → despacho a la ubicación del cliente; mayorista → venta directa desde bodega)
+- [ ] Paso 4 — Vincular ubicaciones tipo "punto de venta" a su cliente (retroactivo para las que ya existen, y exigirlo desde ahora al crear una ubicación de ese tipo para un cliente en concesión/ambos)
+
+Decisión de proceso (validada con el equipo): producción NO se monta aún; se desarrolla sobre staging y producción se configura cuando el equipo vaya a usar datos reales.
 
 ### Fase 0 — Fundaciones (funcionalmente completa; producción pendiente a propósito)
 
@@ -152,6 +160,15 @@ Decisión de proceso (validada con el equipo): producción NO se monta aún; se 
 - Página `/stock`: tabla producto × ubicación + columna Total. El total solo suma ubicaciones activas (ver decisiones.md).
 - Verificado end-to-end con 2 productos × 2 ubicaciones × 3 movimientos: los números cuadraron exactamente.
 
+### Módulo de clientes (Fase 2, paso 1)
+
+- Estructura: `src/modules/clientes/` (queries, actions, formulario de cliente, formulario de contacto).
+- Rutas: `/clientes` (listado), `/clientes/nuevo`, `/clientes/[id]/editar` (incluye la sección de contactos).
+- Campos del cliente: nombre, `rut` (obligatorio, único, normalizado sin puntos ni espacios, ej. "12345678-9"), `giro` (opcional), tipo comercial (mayorista/concesión/ambos), región, condiciones comerciales, notas. Se desactiva, no se borra (mismo motivo que productos/ubicaciones).
+- El RUT y el giro **no estaban en el modelo original del plan** (sección 5); se agregaron a pedido explícito de Javier porque son datos reales de sus clientes empresa y se van a necesitar para facturación (Fase 4). El RUT es obligatorio, el giro opcional.
+- **Contactos**: a diferencia de clientes/productos/ubicaciones, los contactos SÍ se borran de verdad (no se desactivan) — son solo datos de contacto, ningún movimiento de inventario los referencia, así que no aplica el espíritu de D2 aquí. Se agregan y eliminan desde la página de editar cliente.
+- `listarClientesActivos()` en queries.ts queda lista para cuando se construyan Pedidos (Paso 2 de Fase 2).
+
 ### Identidad visual (marca)
 
 - Tema alineado a faunaparachile.com: primario naranja terracota `#D35400`, texto azul pizarra, en `src/app/globals.css` (variables oklch, light + dark).
@@ -176,7 +193,9 @@ El equipo entrega feedback en documentos Word (`docs/feedback/`, ver su `README.
 
 ## Última sesión
 
-**2026-07-26** — Se aplicó el segundo punto pendiente del feedback del equipo: en Ubicaciones se agregaron los campos opcionales de dirección (calle, número, depto, código postal), geolocalización (link de Google Maps, mostrado como "Ver mapa" en el listado) y descripción. Esquema actualizado, migración `0007_brown_punisher.sql` generada y aplicada en staging, build sin errores, y probado end-to-end en el navegador (crear ubicación con todos los campos, verificar que aparecen en el listado, verificar que precargan al editar, desactivar el registro de prueba). Commit y push a `main`. Queda pendiente del feedback: exportar a Excel/CSV (se deja para Fase 4, según lo acordado). Fase 1 sigue con el Paso 5 (carga inicial real) y Paso 6 (fotos) abiertos.
+**2026-07-26 (parte 2)** — Javier preguntó por la diferencia conceptual entre Cliente y Ubicación (bodega única + clientes externos en concesión o mayorista/factura directa). Se confirmó que el modelo actual (D1, D3, tipos de movimiento) ya es coherente sin cambios: concesión usa movimiento "despacho" (el stock sigue figurando en la ubicación del cliente hasta la conciliación), mayorista/factura directa usa movimiento "venta" directo desde bodega (el stock sale del sistema de inmediato, nunca pasa por una ubicación del cliente). Documentado en `docs/decisiones.md`. Luego, por pedido explícito de Javier, se decidió avanzar a la Fase 2 sin cerrar formalmente la Fase 1 (Paso 5 y 6 quedan pendientes; ver decisión documentada arriba y en `docs/decisiones.md`). Se construyó el Paso 1 de la Fase 2: módulo de Clientes completo (CRUD con nombre, RUT único normalizado, giro, tipo comercial, región, condiciones, notas) más Contactos (agregar/eliminar) en la página de edición. Esquema actualizado (migración `0008_icy_lily_hollister.sql`), build y tests (24/24) sin errores, aplicado en staging, y probado end-to-end en el navegador: crear cliente, RUT normalizado sin puntos, bloqueo de RUT duplicado, agregar/eliminar contacto, precarga al editar, desactivar. Commit y push a `main`. Falta: Paso 2 de Fase 2 (Pedidos).
+
+**2026-07-26 (parte 1)** — Se aplicó el segundo punto pendiente del feedback del equipo: en Ubicaciones se agregaron los campos opcionales de dirección (calle, número, depto, código postal), geolocalización (link de Google Maps, mostrado como "Ver mapa" en el listado) y descripción. Esquema actualizado, migración `0007_brown_punisher.sql` generada y aplicada en staging, build sin errores, y probado end-to-end en el navegador (crear ubicación con todos los campos, verificar que aparecen en el listado, verificar que precargan al editar, desactivar el registro de prueba). Commit y push a `main`. Queda pendiente del feedback: exportar a Excel/CSV (se deja para Fase 4, según lo acordado).
 
 **2026-07-18** — Primer feedback del equipo (`docs/feedback/Comentarios desarrollo ERP 1.0.docx`) evaluado y parcialmente aplicado. Decisiones tomadas con el usuario: SKU sugerido automático pero editable (no bloqueado), priorizar correcciones de Productos primero, exportar CSV se deja para Fase 4. Aplicado en Productos: se quitó el campo Peso (form + BD), se corrigió un bug real (los montos con "." de miles se guardaban mal, ej. "12.990" quedaba como 12,99), se agregó campo Descripción, y el SKU ahora se sugiere solo (2 letras de categoría + correlativo) pero se puede editar libremente. Todo probado end-to-end en navegador. Queda pendiente: feedback de Ubicaciones (dirección, geolocalización, descripción).
 
