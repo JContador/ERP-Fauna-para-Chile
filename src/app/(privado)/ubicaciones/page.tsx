@@ -48,6 +48,7 @@ export default async function PaginaUbicaciones() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Dirección</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -57,6 +58,37 @@ export default async function PaginaUbicaciones() {
                 <TableRow key={u.id} className={u.activa ? "" : "opacity-60"}>
                   <TableCell className="font-medium">{u.nombre}</TableCell>
                   <TableCell>{NOMBRE_TIPO[u.tipo] ?? u.tipo}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {u.calle || u.numero ? (
+                      <span>
+                        {[u.calle, u.numero].filter(Boolean).join(" ")}
+                        {u.geolocalizacion && (
+                          <>
+                            {" · "}
+                            <a
+                              href={u.geolocalizacion}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline"
+                            >
+                              Ver mapa
+                            </a>
+                          </>
+                        )}
+                      </span>
+                    ) : u.geolocalizacion ? (
+                      <a
+                        href={u.geolocalizacion}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                      >
+                        Ver mapa
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
                   <TableCell>
                     {u.activa ? (
                       <Badge variant="secondary">Activa</Badge>

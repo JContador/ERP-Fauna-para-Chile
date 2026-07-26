@@ -180,6 +180,12 @@ export const ubicaciones = pgTable("ubicaciones", {
   nombre: text("nombre").notNull(),
   tipo: tipoUbicacion("tipo").notNull(),
   clienteId: uuid("cliente_id").references(() => clientes.id), // opcional: solo para puntos de venta
+  calle: text("calle"),
+  numero: text("numero"),
+  depto: text("depto"), // departamento/oficina, opcional
+  codigoPostal: text("codigo_postal"),
+  geolocalizacion: text("geolocalizacion"), // link de Google Maps
+  descripcion: text("descripcion"), // texto libre para información adicional
   activa: boolean("activa").notNull().default(true),
   creadoEn: timestamp("creado_en", { withTimezone: true }).notNull().defaultNow(),
 });

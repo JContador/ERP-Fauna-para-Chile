@@ -28,6 +28,12 @@ function validarCampos(formData: FormData) {
 
   const nombre = String(formData.get("nombre") ?? "").trim();
   const tipo = String(formData.get("tipo") ?? "").trim();
+  const calle = String(formData.get("calle") ?? "").trim();
+  const numero = String(formData.get("numero") ?? "").trim();
+  const depto = String(formData.get("depto") ?? "").trim();
+  const codigoPostal = String(formData.get("codigoPostal") ?? "").trim();
+  const geolocalizacion = String(formData.get("geolocalizacion") ?? "").trim();
+  const descripcion = String(formData.get("descripcion") ?? "").trim();
 
   if (!nombre) errores.nombre = "El nombre es obligatorio.";
 
@@ -37,7 +43,16 @@ function validarCampos(formData: FormData) {
 
   return {
     errores,
-    valores: { nombre, tipo: tipo as TipoUbicacion },
+    valores: {
+      nombre,
+      tipo: tipo as TipoUbicacion,
+      calle: calle || null,
+      numero: numero || null,
+      depto: depto || null,
+      codigoPostal: codigoPostal || null,
+      geolocalizacion: geolocalizacion || null,
+      descripcion: descripcion || null,
+    },
   };
 }
 
